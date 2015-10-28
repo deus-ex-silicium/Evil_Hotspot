@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     //Declare we will use root for good measure (not that is does anything)
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+    //SettingsActivity permissions
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+
 
     <application
         android:allowBackup="true"
@@ -31,6 +35,7 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="android.evilhotspot.MainActivity" />
+
         </activity>
     </application>
 

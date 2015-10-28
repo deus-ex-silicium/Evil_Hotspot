@@ -47,13 +47,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button rtButton = (Button) findViewById(R.id.rtButton);
         rtButton.setOnClickListener(this);
     }
+
+
+    boolean flag = true;
     public void onClick(View v) {
         // default method for handling onClick Events for our MainActivity
         switch (v.getId()) {
 
             case R.id.hsButton:
                 //if hs button was pressed turn on/off hotspot
-                    ApManager.configApState(MainActivity.this);
+                ApManager.configApState(MainActivity.this);
+
+                Button btn = (Button) findViewById(R.id.hsButton);
+                if (flag) {
+                btn.setBackgroundResource(R.drawable.button_on);
+                flag = false;
+                 } else {
+                btn.setBackgroundResource(R.drawable.button_off);
+                flag = true;
+                 }
+
+
+
                 break;
             case R.id.rtButton:
                 //if root test was pressed attempt to do something as root
