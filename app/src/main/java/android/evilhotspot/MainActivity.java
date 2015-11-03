@@ -1,5 +1,4 @@
 package android.evilhotspot;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,7 +13,9 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         hsButton.setOnClickListener(this);
         Button rtButton = (Button) findViewById(R.id.rtButton);
         rtButton.setOnClickListener(this);
+        //Log.e("MyTemp", netInterface.getDisplayName());
     }
 
 
@@ -58,17 +60,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //if hs button was pressed turn on/off hotspot
                 ApManager.configApState(MainActivity.this);
 
+                //for changing button looks when pressed
                 Button btn = (Button) findViewById(R.id.hsButton);
                 if (flag) {
-                btn.setBackgroundResource(R.drawable.button_on);
-                flag = false;
+                    btn.setBackgroundResource(R.drawable.button_on);
+                    flag = false;
                  } else {
-                btn.setBackgroundResource(R.drawable.button_off);
-                flag = true;
+                    btn.setBackgroundResource(R.drawable.button_off);
+                    flag = true;
                  }
-
-
-
                 break;
             case R.id.rtButton:
                 //if root test was pressed attempt to do something as root
@@ -79,6 +79,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // Attempt to write a file to a root-only
                     DataOutputStream os = new DataOutputStream(p.getOutputStream());
                     os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
+
+                    //arpspoof (attempting to run a C program, build with NDK)
+                    //get resource handle
+                    InputStream raw = getResources().openRawResource(R.raw.arpspoof);
+                    saveFile("arpspoof", raw);
+                    os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
+                    //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.152 \n");
+
 
                     // Close the terminal
                     os.writeBytes("exit\n");
@@ -98,13 +106,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     } catch(InterruptedException e){
                         // TODO Code to run in interrupted exception
-                        toastMessage("not root");
+                        toastMessage("not root, intrp. exeption");
                     }
                 } catch(IOException e) {
                     //TODO Code to run in input/output exception
-                    toastMessage("not root");
+                    toastMessage("not root, I/O exeption");
             }
 
+        }
+    }
+    //for saving embedded raw binary blob as file that can be run on filesystem
+    public int saveFile(String filename, InputStream raw ){
+        try {
+            FileOutputStream fos = openFileOutput(filename, Context.MODE_PRIVATE);
+            int readbyte = 0;
+            while(true) {
+                readbyte = raw.read();
+                if(readbyte == -1) break;
+                fos.write(readbyte);
+            }
+            fos.close();
+            return 0;
+        }
+        catch( Exception e){
+            e.printStackTrace();
+            return 1;
         }
     }
 
