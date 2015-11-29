@@ -2,10 +2,12 @@ package android.evilhotspot;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,6 +52,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
         //Log.e("MyTemp", netInterface.getDisplayName());
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+        //start http proxy service
+        //make the intent and start
+        Intent i= new Intent(getApplicationContext(), HttpProxyService.class);
+        startService(i);
     }
 
 
@@ -59,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.hsButton:
+                Log.d("HS", "hotspot button pressed");
                 //if hs button was pressed turn on/off hotspot
                 ApManager.configApState(MainActivity.this);
 
@@ -93,8 +103,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     saveFile("arpspoof", raw);
                     os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
                     //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.152 \n");
-
-
                     // Close the terminal
                     os.writeBytes("exit\n");
                     os.flush();
@@ -119,7 +127,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     //TODO Code to run in input/output exception
                     toastMessage("not root, I/O exeption");
             }
-
         }
     }
     //for saving embedded raw binary blob as file that can be run on filesystem

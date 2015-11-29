@@ -3,19 +3,12 @@ package android.evilhotspot;
 
 import android.content.Context;
 import android.content.res.Resources;
-
 import org.apache.commons.io.FileUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import android.app.Activity;
-import android.content.res.Resources;
-import android.os.Bundle;
-import android.util.Log;
 import android.widget.Toast;
-import org.jsoup.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -23,41 +16,43 @@ import org.jsoup.helper.*;
 import org.jsoup.select.Elements;
 
 /**
- * Created by Natalia on 2015-11-28.
+ * Created by Natalia
  */
 public class HTMLEditor {
 
+    public static void Reader(Context context, Document htmlFile){
 
-    public static void Reader(Context context){
-
-        Document htmlFile = null;
-
-            htmlFile = Jsoup.parse(Reader2(context), "ISO-8859-1");
-
-        Elements elem = htmlFile.select("img[src]");
-
-        Log.i("bla",elem.first().toString());
-
-        for(Element img: htmlFile.select("img")){
-            img.attr("src", "DDDDDDDDD");
-
+        for(Element img: htmlFile.select("img[src]")){
+            img.attr("src", "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
         }
 
-
-        final File f= new File(context.getFilesDir(),"testnew.html");
+        final File f = new File(context.getFilesDir(),"output.html");
         try {
             FileUtils.writeStringToFile(f, htmlFile.outerHtml(), "UTF-8");
         }catch(IOException e) {
             e.printStackTrace(); }
     }
+    public static void Reader(Context context){
 
+        Document htmlFile;
+        htmlFile = Jsoup.parse(Reader2(context), "ISO-8859-1");
+        Elements elem = htmlFile.select("img[src]");
+        //Log.i("bla",elem.first().toString());
+        for(Element img: htmlFile.select("img[src]")){
+            img.attr("src", "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+        }
+
+        final File f = new File(context.getFilesDir(),"test.html");
+        try {
+            FileUtils.writeStringToFile(f, htmlFile.outerHtml(), "UTF-8");
+        }catch(IOException e) {
+            e.printStackTrace(); }
+    }
     public static String Reader2(Context context){
-
 
                //get the application's resources
                String output ="";
                Resources resources = context.getResources();
-
                 try {
                     output = LoadFile(context, "teststrona", true);
                     //Toast t = Toast.makeText(context, output,Toast.LENGTH_LONG);

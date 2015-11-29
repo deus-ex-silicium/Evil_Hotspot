@@ -3,6 +3,7 @@ package android.evilhotspot;
 import android.content.*;
 import android.net.wifi.*;
 import java.lang.reflect.*;
+
 public class ApManager {
     //SOURCE:
     //http://stackoverflow.com/questions/6394599/android-turn-on-off-wifi-hotspot-programmatically
