@@ -2,7 +2,7 @@
     <string name="app_name">Evil Hotspot</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_settings">SettingsActivity</string>
-    <string name="choose">Choose Image:</string>
+    <string name="choose">Image URL:</string>
     <string name="password">Password:</string>
     <string name="ssid">SSID:</string>
     <string name="Pick_Image">Pick</string>

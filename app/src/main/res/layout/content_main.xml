@@ -40,4 +40,12 @@
         android:layout_below="@+id/hsButton"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="51dp" />
+
+    <Button
+        android:id="@+id/htmlbutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Html test"
+        android:layout_below="@+id/rtButton"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>

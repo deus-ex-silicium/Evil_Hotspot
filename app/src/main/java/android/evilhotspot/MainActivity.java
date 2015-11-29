@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         hsButton.setOnClickListener(this);
         Button rtButton = (Button) findViewById(R.id.rtButton);
         rtButton.setOnClickListener(this);
+        Button htmlButton = (Button) findViewById(R.id.htmlbutton);
+        htmlButton.setOnClickListener(this);
         //Log.e("MyTemp", netInterface.getDisplayName());
     }
 
@@ -69,6 +71,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     btn.setBackgroundResource(R.drawable.button_off);
                     flag = true;
                  }
+                break;
+            case R.id.htmlbutton:
+                toastMessage("html test");
+                HTMLEditor.Reader(this.getApplicationContext());
+
                 break;
             case R.id.rtButton:
                 //if root test was pressed attempt to do something as root

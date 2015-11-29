@@ -8,16 +8,19 @@
     //Declare we will use root for good measure (not that is does anything)
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
     //SettingsActivity permissions
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
-
+    //For uploader
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:icon="@drawable/logo">
+
         <activity
             android:name="android.evilhotspot.MainActivity"
             android:label="@string/app_name"
