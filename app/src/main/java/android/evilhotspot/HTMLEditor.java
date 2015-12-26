@@ -33,7 +33,6 @@ public class HTMLEditor {
             e.printStackTrace(); }
     }
     public static void Reader(Context context){
-
         Document htmlFile;
         htmlFile = Jsoup.parse(Reader2(context), "ISO-8859-1");
         Elements elem = htmlFile.select("img[src]");
@@ -48,6 +47,7 @@ public class HTMLEditor {
         }catch(IOException e) {
             e.printStackTrace(); }
     }
+    //load a file (html) from resource into String part 1
     public static String Reader2(Context context){
 
                //get the application's resources
@@ -64,9 +64,8 @@ public class HTMLEditor {
                     toast.show();
                 }
         return output;
-
-
     }
+    //load a file (html) from resource into String part 2
     public static String LoadFile(Context context, String fileName, boolean loadFromRawFolder) throws IOException
     {
         //Create a InputStream to read the file into

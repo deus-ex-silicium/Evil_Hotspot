@@ -1,7 +1,9 @@
 package android.evilhotspot;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,12 +14,19 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import org.jsoup.nodes.Document;
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -36,14 +45,23 @@ import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    // default IP
+    public static String SERVERIP = "192.168.43.1";
+    // designate a port
+    public static final int SERVERPORT = 1337;
+    private TextView serverStatus;
+    private Handler handler = new Handler();
+    private ServerSocket serverSocket;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        //Create an ApManager to turn hotspot on and off
-        ApManager ap = new ApManager();
+
         //Register our buttons OnClickListener
         Button hsButton = (Button) findViewById(R.id.hsButton);
         hsButton.setOnClickListener(this);
@@ -52,15 +70,103 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
         //Log.e("MyTemp", netInterface.getDisplayName());
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-        //start http proxy service
-        //make the intent and start
-        Intent i= new Intent(getApplicationContext(), HttpProxyService.class);
-        startService(i);
+
+        serverStatus = (TextView) findViewById(R.id.serverStatusView);
+        serverStatus.setTextColor(Color.parseColor("#F5DC49"));
+        Thread proxy = new Thread(new httpThread());
+        proxy.start();
+
+        //Create an ApManager to turn hotspot on and off
+        ApManager ap = new ApManager();
+        //set up ApManager and make sure we start with AP off
+        ApManager.setUp(getApplicationContext());
+        //if (ApManager.isApOn())
+        //    ApManager.configApState();
     }
 
+    public class httpThread implements Runnable {
+        private String line = "";
+        protected Boolean work = true;
+        BufferedReader in;
+        PrintWriter out;
+        public void run() {
+
+            try {
+                if (SERVERIP != null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            serverStatus.setText("Listening on IP: " + SERVERIP);
+                        }
+                    });
+                    serverSocket = new ServerSocket(SERVERPORT);
+                    while (work) {
+                        // listen for incoming clients
+                        final Socket client = serverSocket.accept();
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                serverStatus.setText("Connected.");
+                            }
+                        });
+                        //get request from client
+                        try {
+                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                            while ((line = in.readLine()) != null) {
+                                Log.d("ServerActivity", line);
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        serverStatus.setText("Connected");
+                                    }
+                                });
+                            }
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    serverStatus.setText("Received request.");
+                                }
+                            });
+                            //send response to client
+                            requestTask rt = new requestTask();
+                            Document response = rt.doInBackground("http://www.google.com");
+                            out = new PrintWriter(client.getOutputStream(), true);
+                            out.print(response.toString().toCharArray());
+                            client.close();
+                        } catch (Exception e) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    serverStatus.setText("Oops. Connection interrupted. Please reconnect your phones.");
+                                }
+                            });
+                            e.printStackTrace();
+                        }
+
+                    }
+                    //serverSocket.close();
+
+                } else {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            serverStatus.setText("Couldn't detect internet connection.");
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        serverStatus.setText("Error");
+                    }
+                });
+                e.printStackTrace();
+            }
+        }
+    }
 
     boolean flag = true;
     public void onClick(View v) {
@@ -69,10 +175,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.hsButton:
                 Log.d("HS", "hotspot button pressed");
-                //if hs button was pressed turn on/off hotspot
-                ApManager.configApState(MainActivity.this);
+                //if HS button was pressed turn on/off hotspot
+                ApManager.configApState();
 
-                //for changing button looks when pressed
+                //for changing button appearance when pressed
                 Button btn = (Button) findViewById(R.id.hsButton);
                 if (flag) {
                     btn.setBackgroundResource(R.drawable.button_on);
@@ -82,53 +188,68 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     flag = true;
                  }
                 break;
+
             case R.id.htmlbutton:
                 toastMessage("html test");
                 HTMLEditor.Reader(this.getApplicationContext());
-
                 break;
+
             case R.id.rtButton:
-                //if root test was pressed attempt to do something as root
-                Process p;
-                try {
-                    //Preform su to get root privileges
-                    p = Runtime.getRuntime().exec("su");
-                    // Attempt to write a file to a root-only
-                    DataOutputStream os = new DataOutputStream(p.getOutputStream());
-                    os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
-
-                    //arpspoof (attempting to run a C program, build with NDK)
-                    //get resource handle
-                    InputStream raw = getResources().openRawResource(R.raw.arpspoof);
-                    saveFile("arpspoof", raw);
-                    os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
-                    //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.152 \n");
-                    // Close the terminal
-                    os.writeBytes("exit\n");
-                    os.flush();
-                    try {
-                        p.waitFor();
-                        //DEBUG: exit values
-                        //toastMessage(Integer.toString(p.exitValue()));
-                        if(p.exitValue() == 0){
-                            // TODO Code to run on success
-                            toastMessage("root");
-                        }
-                        else{
-                            // TODO Code to run on unsuccessful
-                            toastMessage("not root");
-                        }
-
-                    } catch(InterruptedException e){
-                        // TODO Code to run in interrupted exception
-                        toastMessage("not root, intrp. exeption");
-                    }
-                } catch(IOException e) {
-                    //TODO Code to run in input/output exception
-                    toastMessage("not root, I/O exeption");
-            }
+                rtPressed();
+                break;
         }
     }
+
+    //try to do something as root (root test)
+    private int rtPressed(){
+        //if root test was pressed attempt to do something as root
+        Process p;
+        try {
+            //Preform su to get root privileges
+            p = Runtime.getRuntime().exec("su");
+            // Attempt to write a file to a root-only directory
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+            //remount the filesystem as read and write, had some problems with road-only fs
+            os.writeBytes("mount -o rw,remount /system\n");
+            os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
+
+            //arpspoof (attempting to run a C program, build with NDK)
+            //get resource handle
+            InputStream raw = getResources().openRawResource(R.raw.arpspoof);
+            saveFile("arpspoof", raw);
+            //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
+            //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.229 \n");
+            // Close the terminal
+            //os.writeBytes("mount -o ro,remount /system");
+            os.writeBytes("exit\n");
+            os.flush();
+            try {
+                p.waitFor();
+                //DEBUG: exit values
+                toastMessage(Integer.toString(p.exitValue()));
+                if(p.exitValue() == 0){
+                    //Exit with 0 if root test successful
+                    toastMessage("root");
+                    return 0;
+                }
+                else{
+                    //Exit with 1 if root permissions were not granted
+                    toastMessage("not root");
+                    return 1;
+                }
+
+            } catch(InterruptedException e){
+                //Exit with 2 if we were rudely intereupted !
+                toastMessage("not root, intrp. exeption");
+                return 2;
+            }
+        } catch(IOException e) {
+            //Exit with 3 if IO exeption occurs
+            toastMessage("not root, I/O exeption");
+            return 3;
+        }
+    }
+
     //for saving embedded raw binary blob as file that can be run on filesystem
     public int saveFile(String filename, InputStream raw ){
         try {
@@ -146,6 +267,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             e.printStackTrace();
             return 1;
         }
+    }
+
+    //function for debugging etc. (shows toast with msg text)
+    public void toastMessage(String msg){
+        Context context = getApplicationContext();
+        int duration = Toast.LENGTH_SHORT;
+        Toast toast = Toast.makeText(context, msg, duration);
+        toast.show();
     }
 
     @Override
@@ -168,12 +297,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-    //Function for debugging etc. (shows toast with msg text)
-    public void toastMessage(String msg){
-        Context context = getApplicationContext();
-        int duration = Toast.LENGTH_SHORT;
-        Toast toast = Toast.makeText(context, msg, duration);
-        toast.show();
     }
 }

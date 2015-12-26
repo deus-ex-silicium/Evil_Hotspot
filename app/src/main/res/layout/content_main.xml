@@ -14,7 +14,7 @@
     tools:showIn="@layout/activity_main">
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/serverStatusView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -48,4 +48,5 @@
         android:text="Html test"
         android:layout_below="@+id/rtButton"
         android:layout_centerHorizontal="true" />
+
 </RelativeLayout>

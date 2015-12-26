@@ -10,22 +10,16 @@ import org.jsoup.nodes.Element;
  */
 public class requestTask extends AsyncTask<String, Void, Document> {
 
-    Document doc;
+    private Document doc;
 
     @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-    }
-
-    @Override
-    protected Document doInBackground(String... urls) {
+    protected Document doInBackground(String... url) {
         //make a request for a website, return response
         try {
-            doc = Jsoup.connect(urls[0]).get();
+            doc = Jsoup.connect(url[0]).get();
         } catch (IOException e) {
             e.printStackTrace();
         }
     return doc;
     }
-
 }
