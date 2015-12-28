@@ -40,7 +40,7 @@ import org.jsoup.nodes.Document;
 //http://stackoverflow.com/questions/6066030/read-only-file-system-on-android
 //# mount -o rw,remount /system  <-> # mount -o ro,remount /system
 
-//Questions concerning our app:
+//PCAP ? not used in the app so far...:
 //http://stackoverflow.com/questions/15557831/android-use-pcap-library
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -69,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rtButton.setOnClickListener(this);
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
+
         //Log.e("MyTemp", netInterface.getDisplayName());
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -89,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public class httpThread implements Runnable {
         private String line = "";
         protected Boolean work = true;
-        BufferedReader in;
-        PrintWriter out;
+        private BufferedReader in;
+        private PrintWriter out;
         public void run() {
 
             try {
@@ -108,33 +109,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         handler.post(new Runnable() {
                             @Override
                             public void run() {
-                                serverStatus.setText("Connected.");
+                                serverStatus.setText("Accepted client socket");
                             }
                         });
                         //get request from client
                         try {
-                            BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                            out = new PrintWriter(client.getOutputStream(), true);
                             while ((line = in.readLine()) != null) {
                                 Log.d("ServerActivity", line);
                                 handler.post(new Runnable() {
                                     @Override
                                     public void run() {
-                                        serverStatus.setText("Connected");
+                                        serverStatus.setText("Reading request");
                                     }
                                 });
-                            }
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    serverStatus.setText("Received request.");
+                                if (line.isEmpty()){
+                                    //send response to client
+                                    //requestTask rt = new requestTask();
+                                    //Document response = rt.doInBackground("http://bash.org.pl/");
+                                    //JUST SEND SOMETHING !
+                                    out.write("SOMETHING!");
+                                    out.flush();
+                                    out.close();
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            serverStatus.setText("Sent response.");
+                                        }
+                                    });
                                 }
-                            });
-                            //send response to client
-                            requestTask rt = new requestTask();
-                            Document response = rt.doInBackground("http://www.google.com");
-                            out = new PrintWriter(client.getOutputStream(), true);
-                            out.print(response.toString().toCharArray());
-                            client.close();
+
+                            }
+
                         } catch (Exception e) {
                             handler.post(new Runnable() {
                                 @Override
@@ -144,10 +151,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             });
                             e.printStackTrace();
                         }
-
                     }
-                    //serverSocket.close();
-
                 } else {
                     handler.post(new Runnable() {
                         @Override
@@ -174,29 +178,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.hsButton:
-                Log.d("HS", "hotspot button pressed");
+                Log.d("BUTTONS", "hotspot button pressed");
                 //if HS button was pressed turn on/off hotspot
-                ApManager.configApState();
-
-                //for changing button appearance when pressed
-                Button btn = (Button) findViewById(R.id.hsButton);
-                if (flag) {
-                    btn.setBackgroundResource(R.drawable.button_on);
-                    flag = false;
-                 } else {
-                    btn.setBackgroundResource(R.drawable.button_off);
-                    flag = true;
-                 }
+                hsPressed();
                 break;
 
             case R.id.htmlbutton:
-                toastMessage("html test");
+                Log.d("BUTTONS", "html test button pressed");
                 HTMLEditor.Reader(this.getApplicationContext());
                 break;
 
             case R.id.rtButton:
+                Log.d("BUTTONS", "root test button pressed");
                 rtPressed();
                 break;
+        }
+    }
+
+    //change current state of mobile hotspot
+    private void hsPressed(){
+        ApManager.configApState();
+        //for changing button appearance when pressed
+        Button btn = (Button) findViewById(R.id.hsButton);
+        if (flag) {
+            btn.setBackgroundResource(R.drawable.button_on);
+            flag = false;
+        } else {
+            btn.setBackgroundResource(R.drawable.button_off);
+            flag = true;
         }
     }
 
