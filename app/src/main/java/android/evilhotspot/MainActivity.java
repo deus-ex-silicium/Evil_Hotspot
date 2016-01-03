@@ -23,9 +23,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.jsoup.nodes.Document;
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
@@ -90,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public class httpThread implements Runnable {
+        private String request = "";
         private String line = "";
         protected Boolean work = true;
         private BufferedReader in;
@@ -106,6 +112,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     });
                     serverSocket = new ServerSocket(SERVERPORT);
                     while (work) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                serverStatus.setText("Listening on IP: " + SERVERIP);
+                            }
+                        });
                         // listen for incoming clients
                         final Socket client = serverSocket.accept();
                         handler.post(new Runnable() {
@@ -118,30 +130,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         try {
                             in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                             out = new PrintWriter(client.getOutputStream(), true);
+                            request = "";
                             while ((line = in.readLine()) != null) {
                                 Log.d("ServerActivity", line);
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        serverStatus.setText("Reading request");
-                                    }
-                                });
+                                request += line + '\n';
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    serverStatus.setText("Reading request");
+                                }
+                            });
+                                //send response to client
                                 if (line.isEmpty()){
-                                    //send response to client
-                                    //requestTask rt = new requestTask();
-                                    //Document response = rt.doInBackground("http://bash.org.pl/");
-                                    //JUST SEND SOMETHING !
-                                    out.write("<h1>SOMETHING!</h1>");
-                                    //out.flush();
-                                    out.close();
+                                    //find which host
+                                    String url = "";
+                                    Pattern p = Pattern.compile("Host:\\s(.*)");
+                                    Matcher m = p.matcher(request);
+                                    while (m.find()) {
+                                        Log.d("REGEXP", m.group(1));
+                                        url += m.group(1);
+                                    }
+                                    //find which file
+                                    p = Pattern.compile("^GET\\s([^\\s]*)\\s");
+                                    m = p.matcher(request);
+                                    while (m.find()) {
+                                        Log.d("REGEXP", m.group(1));
+                                        url += m.group(1);
+                                    }
+
+                                    requestTask rt = new requestTask();
+                                    String response = rt.doInBackground("http://"+url);
+                                    out.print(response);
+                                    out.flush();
                                     handler.post(new Runnable() {
                                         @Override
                                         public void run() {
                                             serverStatus.setText("Sent response.");
                                         }
                                     });
+                                    client.close();
+                                    break;
                                 }
-
                             }
 
                         } catch (Exception e) {
@@ -153,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             });
                             e.printStackTrace();
                         }
+
                     }
                 } else {
                     handler.post(new Runnable() {
@@ -217,51 +247,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     //try to do something as root (root test)
-    private int rtPressed(){
+    private void rtPressed(){
         //if root test was pressed attempt to do something as root
-        Process p;
-        try {
-            //Preform su to get root privileges
-            p = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(p.getOutputStream());
-            //remount the filesystem as read and write, had some problems with road-only fs
-            os.writeBytes("mount -o rw,remount /system\n");
-            // Attempt to write a file to a root-only directory
-            os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
-
+        ShellExecutor exe = new ShellExecutor();
+        if (exe.isRootAvailable()){
+            toastMessage("We got root niggah!");
+        }
+        else{
+            if (exe.RunAsRootOutput("busybox id -u").equals("0"))
+                toastMessage("We got root niggah!");
+            else
+                toastMessage("We don't have root my mans...");
+        }
             //arpspoof (attempting to run a C program, build with NDK)
             //get resource handle
             //InputStream raw = getResources().openRawResource(R.raw.arpspoof);
             //saveFile("arpspoof", raw);
             //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
-            // Close the terminal
-            os.writeBytes("exit\n");
-            os.flush();
-            try {
-                p.waitFor();
-                //DEBUG: exit values
-                toastMessage(Integer.toString(p.exitValue()));
-                if(p.exitValue() == 0){
-                    //Exit with 0 if root test successful
-                    toastMessage("root");
-                    return 0;
-                }
-                else{
-                    //Exit with 1 if root permissions were not granted
-                    toastMessage("not root");
-                    return 1;
-                }
-
-            } catch(InterruptedException e){
-                //Exit with 2 if we were rudely intereupted !
-                toastMessage("not root, intrp. exeption");
-                return 2;
-            }
-        } catch(IOException e) {
-            //Exit with 3 if IO exeption occurs
-            toastMessage("not root, I/O exeption");
-            return 3;
-        }
     }
 
     //inject/remove iptables rule that will route http traffic to our app

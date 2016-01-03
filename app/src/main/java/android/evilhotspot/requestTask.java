@@ -5,21 +5,28 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 /**
  * Created by Nibiru
  */
-public class requestTask extends AsyncTask<String, Void, Document> {
+public class requestTask extends AsyncTask<String, Void, String> {
 
-    private Document doc;
+    OkHttpClient client = new OkHttpClient();
 
     @Override
-    protected Document doInBackground(String... url) {
+    protected String doInBackground(String... url) {
         //make a request for a website, return response
+        Request request = new Request.Builder().url(url[0]).build();
         try {
-            doc = Jsoup.connect(url[0]).get();
+            Response response = client.newCall(request).execute();
+            return response.body().string();
         } catch (IOException e) {
             e.printStackTrace();
+            return "";
         }
-    return doc;
+
     }
 }
