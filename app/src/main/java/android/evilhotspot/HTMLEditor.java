@@ -8,6 +8,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import android.util.Log;
 import android.widget.Toast;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -19,6 +23,20 @@ import org.jsoup.select.Elements;
  * Created by Natalia
  */
 public class HTMLEditor {
+    final static String TAG = "HTMLEditor";
+
+    public static String editHTML(String HTML){
+        Pattern p = Pattern.compile("\\<\\s*img.*src\\s*=\\s*\"([^\"]*)\"");
+        Matcher m = p.matcher(HTML);
+        while (m.find()) {
+            Log.d(TAG, m.group(1));
+            HTML = HTML.replaceFirst(m.group(1),"https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+        }
+
+        return HTML;
+    }
+
+
 
     public static void Reader(Context context, Document htmlFile){
 

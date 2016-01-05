@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         serverStatus = (TextView) findViewById(R.id.serverStatusView);
         serverStatus.setTextColor(Color.parseColor("#F5DC49"));
         Thread proxy = new Thread(new httpThread());
+        //proxy.setPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY);
         proxy.start();
 
         //Create an ApManager to turn hotspot on and off
@@ -111,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     });
                     serverSocket = new ServerSocket(SERVERPORT);
+                    serverSocket.setSoTimeout(0);
                     while (work) {
                         handler.post(new Runnable() {
                             @Override
@@ -160,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                                     requestTask rt = new requestTask();
                                     String response = rt.doInBackground("http://"+url);
+                                    response = HTMLEditor.editHTML(response);
                                     out.print(response);
                                     out.flush();
                                     handler.post(new Runnable() {
