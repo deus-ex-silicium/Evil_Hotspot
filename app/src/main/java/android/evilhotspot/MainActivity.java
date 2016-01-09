@@ -1,21 +1,31 @@
 package android.evilhotspot;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.media.Image;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
-
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -34,6 +44,12 @@ import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    //boolean isSettingsSet = false;
+    //boolean ButtonON = false;
+
+    public static Button hsButton ;
+    //MyApplication instance = new MyApplication(this);
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,34 +59,95 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Create an ApManager to turn hotspot on and off
         ApManager ap = new ApManager();
         //Register our buttons OnClickListener
-        Button hsButton = (Button) findViewById(R.id.hsButton);
+        hsButton = (Button) findViewById(R.id.hsButton);
         hsButton.setOnClickListener(this);
         Button rtButton = (Button) findViewById(R.id.rtButton);
         rtButton.setOnClickListener(this);
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
+
+        MyApplication myapp= new MyApplication(this);
+
+        if(ApManager.isApOn(getApplicationContext())){
+            hsButton.setBackgroundResource(R.drawable.button_on);
+        }
+       // Context context = getApplicationContext();
+
         //Log.e("MyTemp", netInterface.getDisplayName());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyApplication.activityResumed();
+    }
 
-    boolean flag = true;
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyApplication.activityPaused();
+    }
+
+
     public void onClick(View v) {
         // default method for handling onClick Events for our MainActivity
         switch (v.getId()) {
 
             case R.id.hsButton:
                 //if hs button was pressed turn on/off hotspot
-                ApManager.configApState(MainActivity.this);
 
+
+                //Part for switching img of main button & enable/disable checkbox default
+                Context context = MainActivity.this;
+                //WifiManager wifimanager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+                try {
+                    WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
+                    Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
+                    WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
+
+
+                    if (!ApManager.isApOn(context)) {
+                        hsButton.setBackgroundResource(R.drawable.button_on);
+                        //ButtonON=true;
+
+
+                    Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
+                        t.show();
+
+
+                        if (wifiConfig.SSID.equals("AndroidAP")) {
+                            ApManager.isCheckBoxChecked = true;
+                        }
+                        //ApManager.isCheckBoxChecked=false;
+                        else if (wifiConfig.SSID.equals("AndroidAP")) {
+                            ApManager.isCheckBoxChecked = false;
+                        }
+
+
+                    }
+                    //WIFI IS ON Make OFF
+                    else if (ApManager.isApOn(context)) {
+                        hsButton.setBackgroundResource(R.drawable.button_off);
+
+                        if (wifiConfig.SSID.equals("AndroidAP"))  {
+                            ApManager.isCheckBoxChecked = true;
+                        }
+                        //ApManager.isCheckBoxChecked=false;
+                        else if (wifiConfig.SSID.equals("AndroidAP"))  {
+                            ApManager.isCheckBoxChecked = false;
+                        }
+
+                        //ButtonON=false;
+                    }
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+                ApManager.configApState(MainActivity.this);
                 //for changing button looks when pressed
-                Button btn = (Button) findViewById(R.id.hsButton);
-                if (flag) {
-                    btn.setBackgroundResource(R.drawable.button_on);
-                    flag = false;
-                 } else {
-                    btn.setBackgroundResource(R.drawable.button_off);
-                    flag = true;
-                 }
+
+
+
                 break;
             case R.id.htmlbutton:
                 toastMessage("html test");
@@ -156,9 +233,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
+
         if (id == R.id.action_settings) {
-            startActivity(new Intent(this,SettingsActivity.class));
+                Intent setintent = new Intent(this, SettingsActivity.class);
+                startActivity(setintent);
             return true;
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -169,4 +249,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Toast toast = Toast.makeText(context, msg, duration);
         toast.show();
     }
+
+
 }
