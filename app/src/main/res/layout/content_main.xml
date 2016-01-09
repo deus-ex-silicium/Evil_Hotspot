@@ -14,7 +14,7 @@
     tools:showIn="@layout/activity_main">
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/serverStatusView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -37,15 +37,31 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Root test"
+        android:layout_marginTop="28dp"
         android:layout_below="@+id/hsButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="51dp" />
+        android:layout_alignLeft="@+id/iptablesButton"
+        android:layout_alignStart="@+id/iptablesButton"
+        android:layout_alignRight="@+id/iptablesButton"
+        android:layout_alignEnd="@+id/iptablesButton" />
 
     <Button
         android:id="@+id/htmlbutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Html test"
+        android:layout_below="@+id/iptablesButton"
+        android:layout_alignLeft="@+id/hsButton"
+        android:layout_alignStart="@+id/hsButton"
+        android:layout_alignRight="@+id/hsButton"
+        android:layout_alignEnd="@+id/hsButton" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Inject rule"
+        android:id="@+id/iptablesButton"
         android:layout_below="@+id/rtButton"
-        android:layout_centerHorizontal="true" />
+        android:layout_alignRight="@+id/hsButton"
+        android:layout_alignEnd="@+id/hsButton" />
+
 </RelativeLayout>
