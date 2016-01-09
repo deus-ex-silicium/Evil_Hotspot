@@ -2,9 +2,13 @@ package android.evilhotspot;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -16,14 +20,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import android.os.Handler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -44,15 +56,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     final static String TAG = "MainActivity";
 
+    public static Button hsButton ;
+    //MyApplication instance = new MyApplication(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        //Create an ApManager to turn hotspot on and off
+        ApManager ap = new ApManager();
         //Register our buttons OnClickListener
         Button hsButton = (Button) findViewById(R.id.hsButton);
         hsButton.setOnClickListener(this);
@@ -63,6 +77,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button ruleButton = (Button) findViewById(R.id.iptablesButton);
         ruleButton.setOnClickListener(this);
 
+        MyApplication myapp= new MyApplication(this);
+
+        try {
+            Context context = getApplicationContext();
+            WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
+            Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
+            WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
+            
+            if (ApManager.isApOn()) {
+                Button btn = MainActivity.hsButton;
+                btn.setBackgroundResource(R.drawable.button_on);
+                //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+            } else if (!ApManager.isApOn()) {
+                Button btn = MainActivity.hsButton;
+                btn.setBackgroundResource(R.drawable.button_off);
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
         //Log.e("MyTemp", netInterface.getDisplayName());
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -70,14 +118,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //serverStatus = (TextView) findViewById(R.id.serverStatusView);
         //serverStatus.setTextColor(Color.parseColor("#F5DC49"));
 
-        //Create an ApManager to turn hotspot on and off
-        ApManager ap = new ApManager();
         //set up ApManager and make sure we start with AP off
         ApManager.setUp(getApplicationContext());
-        //if (ApManager.isApOn())
-        //    ApManager.configApState();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyApplication.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyApplication.activityPaused();
+    }
+
+    
 
     boolean isAPoff = true;
     public void onClick(View v) {
@@ -89,38 +146,72 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //if HS button was pressed turn on/off hotspot
                 hsPressed();
                 break;
-
             case R.id.htmlbutton:
                 Log.d("BUTTONS", "html test button pressed");
                 HTMLEditor.Reader(this.getApplicationContext());
                 break;
-
             case R.id.rtButton:
                 Log.d("BUTTONS", "root test button pressed");
                 rtPressed();
                 break;
-
             case R.id.iptablesButton:
                 Log.d("BUTTONS", "inject rule button pressed");
-                iptablesRulePressed((Button)findViewById(R.id.iptablesButton));
+                iptablesRulePressed((Button) findViewById(R.id.iptablesButton));
                 break;
         }
     }
 
     //change current state of mobile hotspot
     private void hsPressed(){
-        //ApManager.configApState();
-        //for changing button appearance when pressed
-        Button btn = (Button) findViewById(R.id.hsButton);
-        if (isAPoff) {
-            startService(new Intent(MainActivity.this, HttpProxyService.class));
-            btn.setBackgroundResource(R.drawable.button_on);
-            isAPoff = false;
-        } else {
-            stopService(new Intent(MainActivity.this, HttpProxyService.class));
-            btn.setBackgroundResource(R.drawable.button_off);
-            isAPoff = true;
+        //Part for switching img of main button & enable/disable checkbox default
+        Context context = MainActivity.this;
+        //WifiManager wifimanager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
+            Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
+            WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
+
+
+            if (!ApManager.isApOn()) {
+                hsButton.setBackgroundResource(R.drawable.button_on);
+                //ButtonON=true;
+
+
+                Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
+                t.show();
+
+
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+
+
+            }
+            //WIFI IS ON Make OFF
+            else if (ApManager.isApOn()) {
+                hsButton.setBackgroundResource(R.drawable.button_off);
+
+                if (wifiConfig.SSID.equals("AndroidAP"))  {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP"))  {
+                    ApManager.isCheckBoxChecked = false;
+                }
+
+                //ButtonON=false;
+            }
         }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        ApManager.configApState();
+        //for changing button looks when pressed
+
     }
 
     //try to do something as root (root test)
@@ -143,6 +234,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
     }
 
+    //for saving embedded raw binary blob as file that can be run on filesystem
+    public int saveFile(String filename, InputStream raw ){
+        try {
+            FileOutputStream fos = openFileOutput(filename, Context.MODE_PRIVATE);
+            int readbyte = 0;
+            while(true) {
+                readbyte = raw.read();
+                if(readbyte == -1) break;
+                fos.write(readbyte);
+            }
+            fos.close();
+            return 0;
+        }
+        catch( Exception e){
+            e.printStackTrace();
+            return 1;
+        }
+    }
     //inject/remove iptables rule that will route http traffic to our app
     private int iptablesRulePressed(Button ruleButton){
         ShellExecutor exe = new ShellExecutor();
@@ -163,26 +272,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 toastMessage("Failed");
         }
         return 0;
-    }
-
-
-    //for saving embedded raw binary blob as file that can be run on filesystem
-    public int saveFile(String filename, InputStream raw ){
-        try {
-            FileOutputStream fos = openFileOutput(filename, Context.MODE_PRIVATE);
-            int readbyte = 0;
-            while(true) {
-                readbyte = raw.read();
-                if(readbyte == -1) break;
-                fos.write(readbyte);
-            }
-            fos.close();
-            return 0;
-        }
-        catch( Exception e){
-            e.printStackTrace();
-            return 1;
-        }
     }
 
     //function for debugging etc. (shows toast with msg text)
