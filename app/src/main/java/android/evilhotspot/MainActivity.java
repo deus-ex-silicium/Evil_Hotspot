@@ -5,8 +5,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -18,20 +16,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.jsoup.nodes.Document;
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -50,13 +42,7 @@ import org.jsoup.nodes.Document;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    // default IP
-    public static String SERVERIP = "192.168.43.1";
-    // designate a port
-    public static final int SERVERPORT = 1337;
-    private TextView serverStatus;
-    private Handler handler = new Handler();
-    private ServerSocket serverSocket;
+    final static String TAG = "MainActivity";
 
 
     @Override
@@ -81,11 +67,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        serverStatus = (TextView) findViewById(R.id.serverStatusView);
-        serverStatus.setTextColor(Color.parseColor("#F5DC49"));
-        Thread proxy = new Thread(new httpThread());
-        //proxy.setPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY);
-        proxy.start();
+        //serverStatus = (TextView) findViewById(R.id.serverStatusView);
+        //serverStatus.setTextColor(Color.parseColor("#F5DC49"));
 
         //Create an ApManager to turn hotspot on and off
         ApManager ap = new ApManager();
@@ -95,119 +78,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //    ApManager.configApState();
     }
 
-    public class httpThread implements Runnable {
-        private String request = "";
-        private String line = "";
-        protected Boolean work = true;
-        private BufferedReader in;
-        private PrintWriter out;
-        public void run() {
 
-            try {
-                if (SERVERIP != null) {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            serverStatus.setText("Listening on IP: " + SERVERIP);
-                        }
-                    });
-                    serverSocket = new ServerSocket(SERVERPORT);
-                    serverSocket.setSoTimeout(0);
-                    while (work) {
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                serverStatus.setText("Listening on IP: " + SERVERIP);
-                            }
-                        });
-                        // listen for incoming clients
-                        final Socket client = serverSocket.accept();
-                        handler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                serverStatus.setText("Accepted client socket");
-                            }
-                        });
-                        //get request from client
-                        try {
-                            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                            out = new PrintWriter(client.getOutputStream(), true);
-                            request = "";
-                            while ((line = in.readLine()) != null) {
-                                Log.d("ServerActivity", line);
-                                request += line + '\n';
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    serverStatus.setText("Reading request");
-                                }
-                            });
-                                //send response to client
-                                if (line.isEmpty()){
-                                    //find which host
-                                    String url = "";
-                                    Pattern p = Pattern.compile("Host:\\s(.*)");
-                                    Matcher m = p.matcher(request);
-                                    while (m.find()) {
-                                        Log.d("REGEXP", m.group(1));
-                                        url += m.group(1);
-                                    }
-                                    //find which file
-                                    p = Pattern.compile("^GET\\s([^\\s]*)\\s");
-                                    m = p.matcher(request);
-                                    while (m.find()) {
-                                        Log.d("REGEXP", m.group(1));
-                                        url += m.group(1);
-                                    }
-
-                                    requestTask rt = new requestTask();
-                                    String response = rt.doInBackground("http://"+url);
-                                    response = HTMLEditor.editHTML(response);
-                                    out.print(response);
-                                    out.flush();
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            serverStatus.setText("Sent response.");
-                                        }
-                                    });
-                                    client.close();
-                                    break;
-                                }
-                            }
-
-                        } catch (Exception e) {
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    serverStatus.setText("Oops. Connection interrupted. Please reconnect your phones.");
-                                }
-                            });
-                            e.printStackTrace();
-                        }
-
-                    }
-                } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            serverStatus.setText("Couldn't detect internet connection.");
-                        }
-                    });
-                }
-            } catch (Exception e) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        serverStatus.setText("Error");
-                    }
-                });
-                e.printStackTrace();
-            }
-        }
-    }
-
-    boolean flag = true;
+    boolean isAPoff = true;
     public void onClick(View v) {
         // default method for handling onClick Events for our MainActivity
         switch (v.getId()) {
@@ -237,15 +109,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //change current state of mobile hotspot
     private void hsPressed(){
-        ApManager.configApState();
+        //ApManager.configApState();
         //for changing button appearance when pressed
         Button btn = (Button) findViewById(R.id.hsButton);
-        if (flag) {
+        if (isAPoff) {
+            startService(new Intent(MainActivity.this, HttpProxyService.class));
             btn.setBackgroundResource(R.drawable.button_on);
-            flag = false;
+            isAPoff = false;
         } else {
+            stopService(new Intent(MainActivity.this, HttpProxyService.class));
             btn.setBackgroundResource(R.drawable.button_off);
-            flag = true;
+            isAPoff = true;
         }
     }
 
@@ -271,38 +145,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //inject/remove iptables rule that will route http traffic to our app
     private int iptablesRulePressed(Button ruleButton){
-        Process p;
-        try {
-            //Preform su to get root privileges
-            p = Runtime.getRuntime().exec("su");
-            DataOutputStream os = new DataOutputStream(p.getOutputStream());
-
-            if (ruleButton.getText().toString().equals("Inject rule"))
-                os.writeBytes("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337\n");
-            else
-                os.writeBytes("iptables -t nat -D PREROUTING 1\n");
-
-            os.writeBytes("exit\n");
-            os.flush();
-            try {
-                p.waitFor();
-                if(p.exitValue() == 0){
-                    toastMessage("success");
-                    if (ruleButton.getText().toString().equals("Inject rule"))
-                        ruleButton.setText("Remove rule");
-                    else
-                        ruleButton.setText("Inject rule");
-                    return 0;
-                }
-            } catch (InterruptedException e){
-                //Exit with 2 if we were rudely interrupted !
-                toastMessage("failure, intrp. exeption");
-                return 2;
+        ShellExecutor exe = new ShellExecutor();
+        if (ruleButton.getText().toString().equals("Inject rule")) {
+            if (exe.RunAsRoot("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")) {
+                ruleButton.setText("Remove rule");
+                toastMessage("Success");
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            toastMessage("not root, I/O exeption");
-            return 3;
+            else
+                toastMessage("Failed");
+        }
+        else {
+            if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
+                ruleButton.setText("Inject rule");
+                toastMessage("Success");
+            }
+            else
+                toastMessage("Failed");
         }
         return 0;
     }

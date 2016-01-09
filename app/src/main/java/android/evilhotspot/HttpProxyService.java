@@ -9,39 +9,18 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Process;
 
 import org.jsoup.nodes.Document;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+
 
 public class HttpProxyService extends Service {
-    private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
 
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-            long endTime = System.currentTimeMillis() + 5*1000;
-            while (System.currentTimeMillis() < endTime) {
-                synchronized (this) {
-                    try {
-                        wait(endTime - System.currentTimeMillis());
-                    } catch (Exception e) {
-                    }
-                }
-            }
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
-        }
-    }
 
     @Override
     public void onCreate() {
@@ -49,24 +28,25 @@ public class HttpProxyService extends Service {
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
         // background priority so CPU-intensive work will not disrupt our UI.
-        HandlerThread thread = new HandlerThread("ServiceStartArguments",
-                Process.THREAD_PRIORITY_BACKGROUND);
-        thread.start();
 
-        // Get the HandlerThread's Looper and use it for our Handler
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        Thread proxy = new Thread(new proxyRunnable());
+        proxy.start();
+
+
+        /*String[] args = {"_ProxyServer"};
+        _ProxyServer p = new _ProxyServer();
+        try {
+            p.main(args);
+        } catch (IOException e) {
+            Log.d("_ProxyServer", "error on start");
+        }*/
+
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Proxy starting", Toast.LENGTH_SHORT).show();
 
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
-        Message msg = mServiceHandler.obtainMessage();
-        msg.arg1 = startId;
-        mServiceHandler.sendMessage(msg);
 
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -80,14 +60,7 @@ public class HttpProxyService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Proxy quitting", Toast.LENGTH_SHORT).show();
     }
 }
-
-        //preform a request and print response on console
-        //Log.d("PROXY", "starting HTTP Proxy Service");
-        //requestTask rt = new requestTask();
-        //Document response =  rt.doInBackground("http://www.joemonster.org/");
-        //Log.d("PROXY", response);
-        //HTMLEditor.Reader(getApplicationContext(),response);
 

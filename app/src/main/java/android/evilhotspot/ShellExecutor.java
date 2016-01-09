@@ -33,20 +33,22 @@ public class ShellExecutor {
         return output.toString();
     }
 
-    public boolean RunAsRoot(String[] commands){
+    public boolean RunAsRoot(String command){
         try {
             Process p = Runtime.getRuntime().exec("su");
+
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
-            for (String command : commands){
-                os.writeBytes(command + '\n');
-            }
+            os.writeBytes(command + '\n');
             os.writeBytes("exit\n");
+            p.waitFor();
             os.flush();
+            if (p.exitValue() == 0)
+                return true;
+            else return false;
         } catch (Exception e){
             e.printStackTrace();
             return false;
         }
-        return true;
     }
 
     public String RunAsRootWithException(String command) throws RuntimeException {

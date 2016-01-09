@@ -26,16 +26,25 @@ public class HTMLEditor {
     final static String TAG = "HTMLEditor";
 
     public static String editHTML(String HTML){
-        Pattern p = Pattern.compile("\\<\\s*img.*src\\s*=\\s*\"([^\"]*)\"");
+        //Pattern p = Pattern.compile("\\<\\s*img.*src\\s*=\\s*\"([^\"]*)\"");
+        Pattern p = Pattern.compile("<img[^s]+src\\s*=\\s*\"([^\"]*)\"");
         Matcher m = p.matcher(HTML);
         while (m.find()) {
-            Log.d(TAG, m.group(1));
-            HTML = HTML.replaceFirst(m.group(1),"https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+            Log.d("REGEXP", m.group(0));
+            Log.d("REGEXP->", m.group(1));
+            HTML = HTML.replace(m.group(1), "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
         }
-
         return HTML;
     }
+    public static String editHTMLJsoup(String HTML) {
 
+        Document htmlFile;
+        htmlFile = Jsoup.parse(HTML, "ISO-8859-1");
+        for(Element img: htmlFile.select("img[src]")){
+            img.attr("src", "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+        }
+        return htmlFile.toString();
+    }
 
 
     public static void Reader(Context context, Document htmlFile){
