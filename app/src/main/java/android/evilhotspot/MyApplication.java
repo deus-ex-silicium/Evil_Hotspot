@@ -30,7 +30,7 @@ public class MyApplication extends Application {
       Context context = MyApplication.activity;
 
       //when app is resumed it checks if wifi was on/off from outside and change the button "on/off"
-      if(ApManager.isApOn(context)){
+      if(ApManager.isApOn()){
           Button btn = MainActivity.hsButton;
           btn.setBackgroundResource(R.drawable.button_on);
           //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
@@ -39,7 +39,7 @@ public class MyApplication extends Application {
               ApManager.isCheckBoxChecked=true;
           }
       }
-      else if(!ApManager.isApOn(context)){
+      else if(!ApManager.isApOn()){
           Button btn = MainActivity.hsButton;
           btn.setBackgroundResource(R.drawable.button_off);
       }

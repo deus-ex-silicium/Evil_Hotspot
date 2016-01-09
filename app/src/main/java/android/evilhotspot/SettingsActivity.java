@@ -161,8 +161,8 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
             ApManager.setSSIDPass(name1, pass1, SettingsActivity.this);
             Toast toeast = Toast.makeText(this, "Default settings.", Toast.LENGTH_LONG);
             toeast.show();
-            if (!ApManager.isApOn(getApplicationContext())) {
-                ApManager.configApState(SettingsActivity.this);
+            if (!ApManager.isApOn()) {
+                ApManager.configApState();
                 try {
                     Context context = getApplicationContext();
                     WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
@@ -181,9 +181,9 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
                 enablewifi.setGravity(Gravity.CENTER, 0, 0);
                 enablewifi.show();
                 //when on -> change -> off -> on
-            } else if(ApManager.isApOn(getApplicationContext())){
-                ApManager.configApState(SettingsActivity.this);
-                ApManager.configApState(SettingsActivity.this);
+            } else if(ApManager.isApOn()){
+                ApManager.configApState();
+                ApManager.configApState();
 
                 try {
                     Context context = getApplicationContext();
@@ -206,15 +206,15 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
         else if(!check.isChecked())
         {
             ApManager.isCheckBoxChecked=false;
-            if (!ApManager.isApOn(getApplicationContext())) {
+            if (!ApManager.isApOn()) {
                 ssid.setText(null);
                 pass.setText(null);
                 Toast enablewifi = Toast.makeText(this, "Tethering OFF", Toast.LENGTH_LONG);
                 enablewifi.setGravity(Gravity.CENTER, 0, 0);
                 enablewifi.show();
                 //when on -> change -> off
-            } else if(ApManager.isApOn(getApplicationContext())){
-                ApManager.configApState(SettingsActivity.this);
+            } else if(ApManager.isApOn()){
+                ApManager.configApState();
                 ssid.setText(null);
                 pass.setText(null);
                 Toast enablewifi = Toast.makeText(this, "Tethering OFF", Toast.LENGTH_LONG);
@@ -261,15 +261,15 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
                 ApManager.setSSIDPass(name, password, SettingsActivity.this);
                 //when saved new ssid when switched on will switch wifi
                 //need to be done to reset ssid and password
-                if (!ApManager.isApOn(getApplicationContext())) {
-                    ApManager.configApState(SettingsActivity.this);
+                if (!ApManager.isApOn()) {
+                    ApManager.configApState();
                     Toast enablewifi = Toast.makeText(this, "Tethering ON", Toast.LENGTH_LONG);
                     enablewifi.setGravity(Gravity.CENTER, 0, 0);
                     enablewifi.show();
                     //when on -> change -> off -> on
-                } else if(ApManager.isApOn(getApplicationContext())){
-                    ApManager.configApState(SettingsActivity.this);
-                    ApManager.configApState(SettingsActivity.this);
+                } else if(ApManager.isApOn()){
+                    ApManager.configApState();
+                    ApManager.configApState();
                     Toast enablewifi = Toast.makeText(this, "Tethering ON", Toast.LENGTH_LONG);
                     enablewifi.setGravity(Gravity.CENTER, 0, 0);
                     enablewifi.show();
