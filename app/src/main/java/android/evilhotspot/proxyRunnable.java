@@ -67,13 +67,15 @@ public class proxyRunnable implements Runnable {
                                     parser.parseRequest(request);
                                     Log.d(TAG, "Sending response---------------");
                                     requestTask rt = new requestTask();
+                                    //TODO check request if html
                                     String response = rt.doInBackground(parser);
                                     if (response.isEmpty()) {
                                         Log.d(TAG, "Received 204, closing ---------------");
                                         client.close();
                                     }
                                     //EDIT RESPONSE TO SEND OUT
-                                    response = HTMLEditor.editHTML(response);
+                                   // if (parser.isHTML())
+                                        response = HTMLEditor.editHTML(response);
                                     //response = HTMLEditor.editHTMLJsoup(response);
                                     out.print(response);
                                     out.flush();

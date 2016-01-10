@@ -118,4 +118,13 @@ public class HttpRequestParser {
         return _requestHeaders.size();
     }
 
+    public boolean isHTML(){
+        String line = getRequestLine();
+        String[] parts = line.split(" ");
+        //if (parts[1].contains(".html") || parts[1]. =="/")
+            return true;
+        //else
+           // return false;
+    }
+
 }

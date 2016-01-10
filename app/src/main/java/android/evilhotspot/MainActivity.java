@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Create an ApManager to turn hotspot on and off
         ApManager ap = new ApManager();
         //Register our buttons OnClickListener
-        Button hsButton = (Button) findViewById(R.id.hsButton);
+        hsButton = (Button) findViewById(R.id.hsButton);
         hsButton.setOnClickListener(this);
         Button rtButton = (Button) findViewById(R.id.rtButton);
         rtButton.setOnClickListener(this);
@@ -86,8 +86,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
             
             if (ApManager.isApOn()) {
-                Button btn = MainActivity.hsButton;
-                btn.setBackgroundResource(R.drawable.button_on);
+                //Button btn = MainActivity.hsButton;
+                hsButton.setBackgroundResource(R.drawable.button_on);
                 //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
                 if (wifiConfig.SSID.equals("AndroidAP")) {
                     ApManager.isCheckBoxChecked = true;
@@ -97,8 +97,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ApManager.isCheckBoxChecked = false;
                 }
             } else if (!ApManager.isApOn()) {
-                Button btn = MainActivity.hsButton;
-                btn.setBackgroundResource(R.drawable.button_off);
+                //Button btn = MainActivity.hsButton;
+                hsButton.setBackgroundResource(R.drawable.button_off);
                 if (wifiConfig.SSID.equals("AndroidAP")) {
                     ApManager.isCheckBoxChecked = true;
                 }
@@ -122,19 +122,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ApManager.setUp(getApplicationContext());
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        MyApplication.activityResumed();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MyApplication.activityPaused();
-    }
-
-    
 
     boolean isAPoff = true;
     public void onClick(View v) {
@@ -174,11 +161,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             if (!ApManager.isApOn()) {
                 hsButton.setBackgroundResource(R.drawable.button_on);
+                startService(new Intent(this, HttpProxyService.class));
                 //ButtonON=true;
 
 
-                Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
-                t.show();
+                //Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
+                //t.show();
 
 
                 if (wifiConfig.SSID.equals("AndroidAP")) {
@@ -194,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //WIFI IS ON Make OFF
             else if (ApManager.isApOn()) {
                 hsButton.setBackgroundResource(R.drawable.button_off);
-
+                stopService(new Intent(this, HttpProxyService.class));
                 if (wifiConfig.SSID.equals("AndroidAP"))  {
                     ApManager.isCheckBoxChecked = true;
                 }
@@ -302,5 +290,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyApplication.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyApplication.activityPaused();
     }
 }
