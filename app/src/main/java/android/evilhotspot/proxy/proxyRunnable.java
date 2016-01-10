@@ -1,17 +1,15 @@
-package android.evilhotspot;
+package android.evilhotspot.proxy;
 
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.StringTokenizer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import okhttp3.Request;
 
 /**
  * Created by Nibiru on 2016-01-08.
@@ -25,14 +23,11 @@ public class proxyRunnable implements Runnable {
     public static final int SERVERPORT = 1337;
     private ServerSocket serverSocket;
 
-    HttpRequestParser parser;
-
     private String request = "";
     private String line = "";
     protected Boolean work = true;
     private BufferedReader in;
     private PrintWriter out;
-    String url = "";
     public void run() {
 
         try {
@@ -44,16 +39,20 @@ public class proxyRunnable implements Runnable {
                     }
                 });*/
                 serverSocket = new ServerSocket(SERVERPORT);
-                //serverSocket.setSoTimeout(5000);
                 while (work) {
                     // listen for incoming clients
                     Log.d(TAG, "Listening on IP: " + SERVERIP);
                     final Socket client = serverSocket.accept();
-                    client.setSoTimeout(5000);
+                    client.setSoTimeout(1000);
                     //get request from client
                     try {
                         in = new BufferedReader(new InputStreamReader(client.getInputStream()));
                         out = new PrintWriter(client.getOutputStream(), true);
+                        //DataInputStream in = new DataInputStream(client.getInputStream());
+                        //DataOutputStream out = new DataOutputStream(client.getOutputStream());
+                        //DataInputStream dis = new DataInputStream(client.getInputStream());
+                        //DataOutputStream clientStream = new DataOutputStream
+                        //        (new BufferedOutputStream(client.getOutputStream()));
                         request = "";
                         Log.d(TAG, "Accepted client---------------");
                         while ((line = in.readLine()) != null) {
@@ -65,20 +64,33 @@ public class proxyRunnable implements Runnable {
                                 try {
                                     HttpRequestParser parser = new HttpRequestParser();
                                     parser.parseRequest(request);
+                                    if (parser.isIMG()){
+                                        Log.d("proxyRequest[OUT]", "IS IT IMAGE, CLOSING CONN");
+                                        client.close();
+                                        in.close();
+                                        out.close();
+                                    }
                                     Log.d(TAG, "Sending response---------------");
                                     requestTask rt = new requestTask();
-                                    //TODO check request if html
                                     String response = rt.doInBackground(parser);
                                     if (response.isEmpty()) {
                                         Log.d(TAG, "Received 204, closing ---------------");
                                         client.close();
                                     }
                                     //EDIT RESPONSE TO SEND OUT
-                                   // if (parser.isHTML())
+                                    if (parser.isHTML()) {
+                                        long startTime = System.nanoTime();
                                         response = HTMLEditor.editHTML(response);
-                                    //response = HTMLEditor.editHTMLJsoup(response);
+                                        //response = HTMLEditor.editHTMLJsoup(response);
+                                        long endTime = System.nanoTime();
+                                        Log.d("BENCHMARK", Long.toString((endTime - startTime)/1000000));
+
+                                    }
+                                    //clientStream.writeBytes(response);
+                                    //clientStream.writeUTF(response);
                                     out.print(response);
                                     out.flush();
+
                                 } catch (Exception e) {
                                     Log.d("proxyEXCEPTION!!!", "ABANDON SHIP !!! ---------------");
                                     e.printStackTrace();
@@ -90,7 +102,6 @@ public class proxyRunnable implements Runnable {
                                     out.close();
                                 }
                                 if (in != null) {
-                                    in.reset();
                                     in.close();
                                 }
                                 if (client != null) {

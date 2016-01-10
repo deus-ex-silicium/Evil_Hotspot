@@ -1,8 +1,8 @@
-package android.evilhotspot;
+package android.evilhotspot.proxy;
 import android.os.AsyncTask;
 import android.util.Log;
 import java.io.IOException;
-import okhttp3.Headers;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -25,17 +25,19 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
         String[] parts = reqLine.split(" ");
         url = url + parts[1];
         Log.d("proxyRequest[OUT]", url);
-        String chuj = "";
 
-        request = new Request.Builder().url(url).build();
+        //String chuj = "";
+        request = new Request.Builder().url(url)
+                .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
+                .build();
         /*for (int i = 0; i < parser[0].getHeaderCount(); i++) {
             //chuj += (String)parser[0].getHeaderParam(i).first + ":" + (String)parser[0].getHeaderParam(i).second + "\n";\
             request.newBuilder().addHeader((String)parser[0].getHeaderParam(i).first, (String)parser[0].getHeaderParam(i).second).build();
         }*/
 
 
-
-        if (parser[0].getHeaderParam("Cookie") != null & parser[0].getHeaderParam("Content-Type") != null) {
+        if (parser[0].getHeaderParam("Cookie") != null && parser[0].getHeaderParam("Content-Type") != null &&
+        parser[0].getHeaderParam("Accept") != null && parser[0].getHeaderParam("Accept-Language") != null) {
             request = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
                     .addHeader("Accept", parser[0].getHeaderParam("Accept"))
@@ -45,7 +47,7 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                     .addHeader("Cookie", parser[0].getHeaderParam("Cookie"))
                     .addHeader("Content-Type", parser[0].getHeaderParam("Content-Type"))
                     .build();
-
+/*
         } else if (parser[0].getHeaderParam("Cookie") != null) {
             request = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
@@ -56,16 +58,18 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                     .addHeader("Cookie", parser[0].getHeaderParam("Cookie"))
                     .build();
         }
-        else {
+        else if (parser[0].getHeaderParam("Accept") != null){
             request = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
-                    .addHeader("Accept", parser[0].getHeaderParam("Accept"))
                     .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
+                    .addHeader("Accept", parser[0].getHeaderParam("Accept"))
                     .addHeader("Accept-Encoding", "identity")
                     .addHeader("Accept-Language", parser[0].getHeaderParam("Accept-Language"))
                     .build();
+*/
+        } else
+            request = new Request.Builder().url(url).build();
 
-        }
         try {
             //Log.d("RES", request.headers().toString());
             Response response = client.newCall(request).execute();

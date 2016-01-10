@@ -1,12 +1,9 @@
-package android.evilhotspot;
-
-import android.util.Pair;
+package android.evilhotspot.proxy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Hashtable;
-import java.util.Vector;
 
 /**
  * Class for HTTP request parsing
@@ -14,15 +11,12 @@ import java.util.Vector;
 public class HttpRequestParser {
 
     private String _requestLine;
-    private Hashtable<String, String> _requestHeadersHash;
-    private Vector<Pair<String,String>> _requestHeaders;
-    private StringBuffer _messagetBody;
-    private int current = 0;
+    private Hashtable<String, String> _requestHeaders;
+    private StringBuffer _messageBody;
 
     public HttpRequestParser() {
-        _requestHeadersHash = new Hashtable<String, String>();
-        _requestHeaders = new Vector<>();
-        _messagetBody = new StringBuffer();
+        _requestHeaders = new Hashtable<>();
+        _messageBody = new StringBuffer();
     }
 
     /**
@@ -78,10 +72,7 @@ public class HttpRequestParser {
         if (idx == -1) {
             throw new Exception("Invalid Header Parameter: " + header);
         }
-        _requestHeadersHash.put(header.substring(0, idx), header.substring(idx + 2, header.length()));
-
-        Pair p = new Pair(header.substring(0, idx),header.substring(idx + 2, header.length() ));
-        _requestHeaders.add(p);
+        _requestHeaders.put(header.substring(0, idx), header.substring(idx + 2, header.length()));
     }
 
 
@@ -94,11 +85,11 @@ public class HttpRequestParser {
      * @return String with message-body
      */
     public String getMessageBody() {
-        return _messagetBody.toString();
+        return _messageBody.toString();
     }
 
     private void appendMessageBody(String bodyLine) {
-        _messagetBody.append(bodyLine).append("\r\n");
+        _messageBody.append(bodyLine).append("\r\n");
     }
 
     /**
@@ -106,25 +97,27 @@ public class HttpRequestParser {
      * @param headerName Name of header
      * @return String with the value of the header or null if not found.
      */
-    public Pair getHeaderParam(int idx){
-        //return _requestHeaders.get(headerName);
-        return _requestHeaders.get(idx);
-    }
     public String getHeaderParam(String headerName){
-        return _requestHeadersHash.get(headerName);
-    }
-
-    public int getHeaderCount(){
-        return _requestHeaders.size();
+        return _requestHeaders.get(headerName);
     }
 
     public boolean isHTML(){
         String line = getRequestLine();
         String[] parts = line.split(" ");
-        //if (parts[1].contains(".html") || parts[1]. =="/")
+        if (parts[1].endsWith(".html") || parts[1].equals("/"))
             return true;
-        //else
-           // return false;
+        else
+            return false;
+    }
+
+    public boolean isIMG(){
+        String line = getRequestLine();
+        String[] parts = line.split(" ");
+        if (parts[1].endsWith(".jpg") || parts[1].endsWith(".jpeg") || parts[1].endsWith(".png")){
+            return true;
+        }
+        else
+            return false;
     }
 
 }

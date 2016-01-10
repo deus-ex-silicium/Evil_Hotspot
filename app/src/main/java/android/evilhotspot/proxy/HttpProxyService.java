@@ -1,22 +1,9 @@
-package android.evilhotspot;
+package android.evilhotspot.proxy;
 
-import android.app.IntentService;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.os.Process;
-
-import org.jsoup.nodes.Document;
-
-import java.io.IOException;
-import java.net.ServerSocket;
 
 
 public class HttpProxyService extends Service {
@@ -46,7 +33,6 @@ public class HttpProxyService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Toast.makeText(this, "Proxy starting", Toast.LENGTH_SHORT).show();
-
 
         // If we get killed, after returning from here, restart
         return START_STICKY;

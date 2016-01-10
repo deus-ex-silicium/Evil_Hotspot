@@ -1,4 +1,4 @@
-package android.evilhotspot;
+package android.evilhotspot.proxy;
 
 
 import android.content.Context;
@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.evilhotspot.SettingsActivity;
 import android.util.Log;
 import android.widget.Toast;
 import org.jsoup.Jsoup;
@@ -32,7 +33,11 @@ public class HTMLEditor {
         while (m.find()) {
             Log.d("REGEXP", m.group(0));
             Log.d("REGEXP->", m.group(1));
-            HTML = HTML.replace(m.group(1), "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+            HTML = HTML.replace(m.group(1), SettingsActivity.URLfield);
+            /*int start = HTML.indexOf(m.group(1));
+            String left = HTML.substring(0, start);
+            String right = HTML.substring(start + m.group(1).length());
+            HTML = left + SettingsActivity.URLfield + right;*/
         }
         return HTML;
     }
@@ -41,7 +46,7 @@ public class HTMLEditor {
         Document htmlFile;
         htmlFile = Jsoup.parse(HTML, "ISO-8859-1");
         for(Element img: htmlFile.select("img[src]")){
-            img.attr("src", "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png");
+            img.attr("src", SettingsActivity.URLfield);
         }
         return htmlFile.toString();
     }

@@ -50,6 +50,8 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
     public EditText pass;
     public EditText ssid;
+    public EditText url;
+    public static String URLfield = "https://upload.wikimedia.org/wikipedia/commons/0/0b/AllYourDataAreBelongToUS.png";
 
 
     @Override
@@ -70,6 +72,8 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
         pass = (EditText)findViewById(R.id.editpass);
         ssid = (EditText)findViewById(R.id.editssid);
+        url = (EditText)findViewById(R.id.url);
+        url.setText(URLfield);
 
         try {
             Context context = getApplicationContext();
@@ -279,8 +283,8 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
                 break;
             case R.id.pickbutton:
-                Toast url  = Toast.makeText(this, "Url saved.", Toast.LENGTH_LONG);
-                url.show();
+                Toast.makeText(this, "Url saved.", Toast.LENGTH_LONG).show();
+                URLfield = url.getText().toString();
                 break;
         }
     }

@@ -1,4 +1,4 @@
-package android.evilhotspot;
+package android.evilhotspot.proxyV2;
 
 import android.util.Log;
 
