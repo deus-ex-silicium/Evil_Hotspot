@@ -87,14 +87,13 @@
         android:fontFamily="sans-serif-condensed"
         android:textStyle="bold|italic"
         android:textColor="@color/colorAccent"
-        android:layout_alignBottom="@+id/url"
+        android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
     <Button
         android:id="@+id/savebutton"
         android:layout_width="120dp"
         android:layout_height="70dp"
-
         android:background="@drawable/save"
         android:layout_below="@+id/editpass"
         android:layout_alignParentRight="true"
@@ -104,10 +103,20 @@
         android:layout_width="120dp"
         android:layout_height="70dp"
         android:onClick="SaveUrlClicked"
-        android:background="@drawable/save"
-        android:layout_below="@+id/url"
-        android:layout_alignRight="@+id/url"
-        android:layout_alignEnd="@+id/url" />
+        android:background="@drawable/upload"
+        android:layout_below="@+id/clearbutton"
+        android:layout_alignLeft="@+id/savebutton"
+        android:layout_alignStart="@+id/savebutton" />
+    <Button
+        android:id="@+id/clearbutton"
+        android:layout_width="100dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="-7dp"
+        android:background="@drawable/clear"
+        android:layout_alignBottom="@+id/checkBoxUrl"
+        android:layout_alignLeft="@+id/pickbutton"
+        android:layout_alignStart="@+id/pickbutton"
+        android:onClick="ClearUrlClicked"/>
 
     <EditText
         android:id="@+id/url"
@@ -119,11 +128,9 @@
         android:ems="8"
         android:textColor="@color/colorAccent"
         android:inputType="text"
-        android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_toEndOf="@+id/choose"
-        android:layout_toRightOf="@+id/choose" />
+        android:layout_above="@+id/clearbutton"
+        android:layout_toRightOf="@+id/choose"
+        android:layout_toEndOf="@+id/choose" />
 
     <CheckBox
         android:layout_width="wrap_content"
@@ -143,5 +150,24 @@
         android:layout_alignLeft="@+id/pass"
         android:layout_marginBottom="20dp"
         android:onClick="Checkbox_clicked"/>
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Use default"
+        android:id="@+id/checkBoxUrl"
+        android:textSize="18sp"
+        android:scaleX="1.50"
+        android:scaleY="1.50"
+        android:layout_marginTop="30dp"
+        android:fontFamily="sans-serif-condensed"
+        android:textStyle="bold|italic"
+        android:textColor="@color/colorAccent"
+        android:buttonTint="@color/colorAccent"
+        android:backgroundTint="@color/colorAccent"
+        android:onClick="CheckboxUrl_clicked"
+        android:layout_below="@+id/choose"
+        android:layout_alignLeft="@+id/checkbox"
+        android:layout_alignStart="@+id/checkbox" />
 
 </RelativeLayout>

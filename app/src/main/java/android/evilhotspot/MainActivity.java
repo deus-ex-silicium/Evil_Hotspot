@@ -142,16 +142,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
             WifiConfiguration wifiConfig = (WifiConfiguration) getConfigMethod.invoke(wifiManager);
 
-
             if (!ApManager.isApOn()) {
                 hsButton.setBackgroundResource(R.drawable.button_on);
                 startService(new Intent(this, HttpProxyService.class));
-                //ButtonON=true;
-
-
-                //Toast t = Toast.makeText(this, wifiConfig.SSID, Toast.LENGTH_LONG);
-                //t.show();
-
 
                 if (wifiConfig.SSID.equals("AndroidAP")) {
                     ApManager.isCheckBoxChecked = true;
@@ -160,8 +153,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 else if (!wifiConfig.SSID.equals("AndroidAP")) {
                     ApManager.isCheckBoxChecked = false;
                 }
-
-
             }
             //WIFI IS ON Make OFF
             else if (ApManager.isApOn()) {
@@ -174,8 +165,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 else if (!wifiConfig.SSID.equals("AndroidAP"))  {
                     ApManager.isCheckBoxChecked = false;
                 }
-
-                //ButtonON=false;
             }
         }
         catch(Exception e){
@@ -183,7 +172,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         ApManager.configApState();
         //for changing button looks when pressed
-
     }
 
     //try to do something as root (root test)

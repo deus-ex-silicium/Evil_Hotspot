@@ -1,8 +1,19 @@
 package android.evilhotspot;
 
 import android.content.*;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.*;
+import android.text.format.Formatter;
+import android.util.Log;
+import android.widget.Toast;
+
+import java.io.IOException;
 import java.lang.reflect.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.ByteOrder;
+import java.util.Collections;
 import java.util.List;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -54,6 +65,8 @@ public class ApManager {
             }
             Method method = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
             method.invoke(wifiManager, wificonfiguration, !isApOn());
+            Log.d("IP ADDRESS", getIpAddr());
+
             return true;
         }
         catch (Exception e) {
@@ -110,4 +123,64 @@ public class ApManager {
         //fuck it Im just gonna hard code it
         return "wlan0";
     }
+
+
+    public static String getIpAddr() {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress();
+                        //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        boolean isIPv4 = sAddr.indexOf(':')<0;
+
+                        if (true) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
+
+                                return delim<0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {}
+        return "";
+    }
+
+    //checks if connection with internet is on
+    //go to google and checks if it make a connection
+    public static boolean hasInternetAccess(Context context) {
+        if (isNetworkAvailable(context)) {
+            try {
+                HttpURLConnection urlc = (HttpURLConnection)
+                        (new URL("http://clients3.google.com/generate_204")
+                                .openConnection());
+                urlc.setRequestProperty("User-Agent", "Android");
+                urlc.setRequestProperty("Connection", "close");
+                urlc.setConnectTimeout(1500);
+                urlc.connect();
+                return (urlc.getResponseCode() == 204 &&
+                        urlc.getContentLength() == 0);
+            } catch (IOException e) {
+                Log.e("Connection", "Error internet connection", e);
+            }
+        } else {
+            Log.d("Connection", "No network available");
+        }
+        return false;
+    }
+    //checks if there is network
+    private static boolean isNetworkAvailable(Context context) {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null;
+    }
+
 }
