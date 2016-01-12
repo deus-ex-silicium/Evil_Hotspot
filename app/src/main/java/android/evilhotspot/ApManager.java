@@ -30,6 +30,9 @@ public class ApManager {
     //store string and boolean used in setting and main activity
     public static String name=null;
     public static String password =null;
+    public static String defaultname= "AndroidAP";
+    public static String defaultpass= "gh4zz88u";
+
     public static boolean isCheckBoxChecked = false;
     private static WifiManager wifiManager;
 

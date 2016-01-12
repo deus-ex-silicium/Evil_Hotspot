@@ -1,5 +1,6 @@
 package android.evilhotspot.proxy;
 
+import android.evilhotspot.ApManager;
 import android.util.Log;
 
 import java.io.BufferedOutputStream;
@@ -18,7 +19,9 @@ public class proxyRunnable implements Runnable {
     final static String TAG = "proxyRunnable";
 
     // default IP
-    public static String SERVERIP = "192.168.43.1";
+    //public static String SERVERIP = "192.168.43.1";
+    //public static String SERVERIP = ApManager.getIpAddr();
+    public static String SERVERIP = "100.116.91.169";
     // designate a port
     public static final int SERVERPORT = 1337;
     private ServerSocket serverSocket;

@@ -137,19 +137,19 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
         CheckBox check = (CheckBox)v;
         if(check.isChecked()) {
-            String name1 = null;
-            String pass1 = null;
+            String name1 = ApManager.defaultname;
+            String pass1 = ApManager.defaultpass;
             ApManager.isCheckBoxChecked=true;
 
-            if(ssid.toString()!=null || pass.toString()!=null){
-                ssid.setText(null);
-                pass.setText(null);
+            //if(ssid.toString()!=null && pass.toString()!=null){
+                ssid.setText(ApManager.defaultname);
+                pass.setText(ApManager.defaultpass);
 
-                ApManager.name = ssid.getText().toString();
-                ApManager.password = pass.getText().toString();
-                name1 = ssid.getText().toString();
-                pass1 = pass.getText().toString();
-            }
+               // ApManager.name = ssid.getText().toString();
+                //ApManager.password = pass.getText().toString();
+                //name1 = ssid.getText().toString();
+                //pass1 = pass.getText().toString();
+           // }
 
             ApManager.setSSIDPass(name1, pass1, SettingsActivity.this);
             Toast toeast = Toast.makeText(this, "Default settings.", Toast.LENGTH_LONG);
@@ -240,7 +240,7 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
                 else
                     check.setChecked(false);
 
-                if (password.length() < 8) {
+                if (password.length() < 8 || name.length() < 1) {
                     Toast toosmall = Toast.makeText(this, "Please enter more than 7 characters", Toast.LENGTH_LONG);
                     toosmall.show();
                     return;
@@ -288,17 +288,17 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        MyApplication.activityResumed();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MyApplication.activityPaused();
-    }
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        MyApplication.activityResumed();
+//    }
+//
+//    @Override
+//    protected void onPause() {
+//        super.onPause();
+//        MyApplication.activityPaused();
+//    }
 }
 
 

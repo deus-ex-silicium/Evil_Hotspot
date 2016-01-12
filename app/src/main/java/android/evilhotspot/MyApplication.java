@@ -15,7 +15,7 @@ import android.util.Log;
 public class MyApplication extends Application {
 
   static Activity activity;
-
+    public static boolean isfirsttime=true;
   public MyApplication(MainActivity act){
       this.activity=act;
   }
@@ -32,15 +32,21 @@ public class MyApplication extends Application {
 
 
       //when app is resumed it checks if wifi was on/off from outside and change the button "on/off"
-      if(ApManager.isApOn()){
+      if(ApManager.isApOn() ){
           //Button btn = MainActivity.hsButton;
+          //if(MainActivity.hsButton.isPressed())
+           //   isfirsttime=true;
           MainActivity.hsButton.setBackgroundResource(R.drawable.button_on);
-          context.startService(new Intent(context, HttpProxyService.class));
+          //if(isfirsttime) {
+              context.startService(new Intent(context, HttpProxyService.class));
+              isfirsttime=false;
+         // }
           //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
           if(ApManager.name==null || ApManager.password==null)
           {
               ApManager.isCheckBoxChecked=true;
           }
+
       }
       else if(!ApManager.isApOn()){
           //Button btn = MainActivity.hsButton;
