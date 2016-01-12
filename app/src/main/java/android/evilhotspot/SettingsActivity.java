@@ -27,6 +27,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -286,6 +288,22 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
         CheckBox checkUrl = (CheckBox) findViewById(R.id.checkBoxUrl);
         checkUrl.setChecked(false);
 
+    }
+
+    EditText editpass;
+    CheckBox checkpass;
+    public void Checkboxpass_clicked(View v){
+
+        editpass = (EditText) findViewById(R.id.editpass);
+        // get the show/hide password Checkbox
+        checkpass = (CheckBox) v;
+        if (!checkpass.isChecked()) {
+            // show password
+            editpass.setTransformationMethod(PasswordTransformationMethod.getInstance());
+        } else {
+            // hide password
+            editpass.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+        }
     }
 
 //    @Override

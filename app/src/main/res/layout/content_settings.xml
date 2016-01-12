@@ -29,8 +29,8 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignLeft="@+id/url"
-        android:layout_alignStart="@+id/url" />
+        android:layout_toRightOf="@+id/pass"
+        android:layout_toEndOf="@+id/pass" />
 
     <EditText
         android:id="@+id/editpass"
@@ -47,8 +47,7 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_toEndOf="@+id/pass"
-        android:layout_alignLeft="@+id/editssid"
-        android:layout_alignStart="@+id/editssid" />
+        android:layout_toRightOf="@+id/pass" />
 
     <TextView
         android:id="@+id/ssid"
@@ -87,7 +86,7 @@
         android:fontFamily="sans-serif-condensed"
         android:textStyle="bold|italic"
         android:textColor="@color/colorAccent"
-        android:layout_centerVertical="true"
+        android:layout_alignBottom="@+id/url"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
     <Button
@@ -96,8 +95,8 @@
         android:layout_height="70dp"
         android:background="@drawable/save"
         android:layout_below="@+id/editpass"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignRight="@+id/editpass"
+        android:layout_alignEnd="@+id/editpass" />
     <Button
         android:id="@+id/pickbutton"
         android:layout_width="120dp"
@@ -105,18 +104,17 @@
         android:onClick="SaveUrlClicked"
         android:background="@drawable/upload"
         android:layout_below="@+id/clearbutton"
-        android:layout_alignLeft="@+id/savebutton"
-        android:layout_alignStart="@+id/savebutton" />
+        android:layout_alignRight="@+id/url"
+        android:layout_alignEnd="@+id/url" />
     <Button
         android:id="@+id/clearbutton"
         android:layout_width="100dp"
         android:layout_height="60dp"
-        android:layout_marginLeft="-7dp"
         android:background="@drawable/clear"
-        android:layout_alignBottom="@+id/checkBoxUrl"
+        android:onClick="ClearUrlClicked"
+        android:layout_below="@+id/url"
         android:layout_alignLeft="@+id/pickbutton"
-        android:layout_alignStart="@+id/pickbutton"
-        android:onClick="ClearUrlClicked"/>
+        android:layout_alignStart="@+id/pickbutton" />
 
     <EditText
         android:id="@+id/url"
@@ -128,9 +126,11 @@
         android:ems="8"
         android:textColor="@color/colorAccent"
         android:inputType="text"
-        android:layout_above="@+id/clearbutton"
-        android:layout_toRightOf="@+id/choose"
-        android:layout_toEndOf="@+id/choose" />
+        android:layout_below="@+id/checkBoxpass"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_toEndOf="@+id/choose"
+        android:layout_toRightOf="@+id/choose" />
 
     <CheckBox
         android:layout_width="wrap_content"
@@ -159,15 +159,34 @@
         android:textSize="18sp"
         android:scaleX="1.50"
         android:scaleY="1.50"
-        android:layout_marginTop="30dp"
         android:fontFamily="sans-serif-condensed"
         android:textStyle="bold|italic"
         android:textColor="@color/colorAccent"
         android:buttonTint="@color/colorAccent"
         android:backgroundTint="@color/colorAccent"
         android:onClick="CheckboxUrl_clicked"
-        android:layout_below="@+id/choose"
+        android:layout_above="@+id/pickbutton"
         android:layout_alignLeft="@+id/checkbox"
         android:layout_alignStart="@+id/checkbox" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show pass"
+        android:id="@+id/checkBoxpass"
+        android:textSize="18sp"
+        android:scaleX="1.50"
+        android:scaleY="1.50"
+        android:fontFamily="sans-serif-condensed"
+        android:textStyle="bold|italic"
+        android:textColor="@color/colorAccent"
+        android:buttonTint="@color/colorAccent"
+        android:backgroundTint="@color/colorAccent"
+        android:onClick="Checkboxpass_clicked"
+        android:layout_below="@+id/checkbox"
+        android:layout_alignRight="@+id/clearbutton"
+        android:layout_alignEnd="@+id/clearbutton"
+        android:layout_marginRight="31dp"
+        android:layout_marginEnd="31dp" />
 
 </RelativeLayout>
