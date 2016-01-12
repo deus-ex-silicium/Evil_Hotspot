@@ -20,8 +20,8 @@ public class proxyRunnable implements Runnable {
 
     // default IP
     //public static String SERVERIP = "192.168.43.1";
-    //public static String SERVERIP = ApManager.getIpAddr();
-    public static String SERVERIP = "100.116.91.169";
+    public static String SERVERIP = ApManager.getIpAddr();
+    //public static String SERVERIP = "100.116.91.169";
     // designate a port
     public static final int SERVERPORT = 1337;
     private ServerSocket serverSocket;

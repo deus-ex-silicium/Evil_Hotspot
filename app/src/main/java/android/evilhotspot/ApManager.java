@@ -31,7 +31,7 @@ public class ApManager {
     public static String name=null;
     public static String password =null;
     public static String defaultname= "AndroidAP";
-    public static String defaultpass= "gh4zz88u";
+    public static String defaultpass= "123testing";
 
     public static boolean isCheckBoxChecked = false;
     private static WifiManager wifiManager;

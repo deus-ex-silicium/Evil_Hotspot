@@ -1,9 +1,15 @@
 package android.evilhotspot.proxy;
 
+
+
+import android.support.v4.util.Pair;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Hashtable;
+import java.util.Vector;
+
 
 /**
  * Class for HTTP request parsing
@@ -12,10 +18,14 @@ public class HttpRequestParser {
 
     private String _requestLine;
     private Hashtable<String, String> _requestHeaders;
+    private Vector<Pair<String,String>> _requestHeadersVec;
     private StringBuffer _messageBody;
 
+    private int current = 0;
     public HttpRequestParser() {
-        _requestHeaders = new Hashtable<>();
+        _requestHeaders = new Hashtable<String, String>();
+
+        _requestHeadersVec = new Vector<>();
         _messageBody = new StringBuffer();
     }
 
@@ -47,6 +57,7 @@ public class HttpRequestParser {
 
     }
 
+
     /**
      *
      * 5.1 Request-Line The Request-Line begins with a method token, followed by
@@ -73,6 +84,9 @@ public class HttpRequestParser {
             throw new Exception("Invalid Header Parameter: " + header);
         }
         _requestHeaders.put(header.substring(0, idx), header.substring(idx + 2, header.length()));
+
+        Pair p = new Pair(header.substring(0, idx),header.substring(idx + 1, header.length() ));
+        _requestHeadersVec.add(p);
     }
 
 
@@ -92,12 +106,17 @@ public class HttpRequestParser {
         _messageBody.append(bodyLine).append("\r\n");
     }
 
+    public Pair getHeaderParam(int idx){
+        //return _requestHeaders.get(headerName);
+        return _requestHeadersVec.get(idx);
+    }
     /**
      * For list of available headers refer to sections: 4.5, 5.3, 7.1 of RFC 2616
      * @param headerName Name of header
      * @return String with the value of the header or null if not found.
      */
-    public String getHeaderParam(String headerName){
+    public String getHeaderParam(String headerName)
+    {
         return _requestHeaders.get(headerName);
     }
 
@@ -118,6 +137,9 @@ public class HttpRequestParser {
         }
         else
             return false;
+    }
+    public int getHeaderCount(){
+        return _requestHeadersVec.size();
     }
 
 }

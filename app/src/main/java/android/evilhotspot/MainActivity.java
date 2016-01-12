@@ -214,22 +214,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //inject/remove iptables rule that will route http traffic to our app
     private int iptablesRulePressed(Button ruleButton){
         ShellExecutor exe = new ShellExecutor();
-        if (ruleButton.getText().toString().equals("Inject rule")) {
+       // if (ruleButton.getText().toString().equals("Inject rule")) {
             if (exe.RunAsRoot("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")) {
                 ruleButton.setText("Remove rule");
                 toastMessage("Success");
             }
             else
                 toastMessage("Failed");
-        }
-        else {
-            if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
-                ruleButton.setText("Inject rule");
-                toastMessage("Success");
-            }
-            else
-                toastMessage("Failed");
-        }
+//        }
+//        else {
+//            if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
+//                ruleButton.setText("Inject rule");
+//                toastMessage("Success");
+//            }
+//            else
+//                toastMessage("Failed");
+//        }
         return 0;
     }
     //function for debugging etc. (shows toast with msg text)

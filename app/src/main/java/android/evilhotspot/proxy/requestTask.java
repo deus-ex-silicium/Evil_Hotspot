@@ -17,8 +17,8 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
 
     @Override
     protected String doInBackground(HttpRequestParser... parser) {
-        //make a request for a website, return response
-        Request request;
+        //make a builder for a website, return response
+        Request.Builder builder;
         String url = "http://";
         url += parser[0].getHeaderParam("Host");
         String reqLine = parser[0].getRequestLine();
@@ -26,19 +26,25 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
         url = url + parts[1];
         Log.d("proxyRequest[OUT]", url);
 
-        //String chuj = "";
-        request = new Request.Builder().url(url)
-                .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
-                .build();
-        /*for (int i = 0; i < parser[0].getHeaderCount(); i++) {
-            //chuj += (String)parser[0].getHeaderParam(i).first + ":" + (String)parser[0].getHeaderParam(i).second + "\n";\
-            request.newBuilder().addHeader((String)parser[0].getHeaderParam(i).first, (String)parser[0].getHeaderParam(i).second).build();
-        }*/
+        String chuj = "";
+        builder = new Request.Builder().url(url);
+                //.addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
+               // .build();
+        for (int i = 0; i < parser[0].getHeaderCount(); i++) {
+            //chuj += (String)parser[0].getHeaderParam(i).first + ":" + (String)parser[0].getHeaderParam(i).second + "\n";
+            if(parser[0].getHeaderParam(i).first.toString().equals("Accept-Encoding"))
+                 builder.addHeader((String) parser[0].getHeaderParam(i).first, "identity");
+            else
+                builder.addHeader((String) parser[0].getHeaderParam(i).first, (String) parser[0].getHeaderParam(i).second);
+
+        }
+        Request request =  builder.build();
 
 
+/*
         if (parser[0].getHeaderParam("Cookie") != null && parser[0].getHeaderParam("Content-Type") != null &&
         parser[0].getHeaderParam("Accept") != null && parser[0].getHeaderParam("Accept-Language") != null) {
-            request = new Request.Builder().url(url)
+            builder = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
                     .addHeader("Accept", parser[0].getHeaderParam("Accept"))
                     .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
@@ -49,7 +55,7 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                     .build();
 /*
         } else if (parser[0].getHeaderParam("Cookie") != null) {
-            request = new Request.Builder().url(url)
+            builder = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
                     .addHeader("Accept", parser[0].getHeaderParam("Accept"))
                     .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
@@ -59,7 +65,7 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                     .build();
         }
         else if (parser[0].getHeaderParam("Accept") != null){
-            request = new Request.Builder().url(url)
+            builder = new Request.Builder().url(url)
                     .addHeader("Connection", parser[0].getHeaderParam("Connection"))
                     .addHeader("User-Agent", parser[0].getHeaderParam("User-Agent"))
                     .addHeader("Accept", parser[0].getHeaderParam("Accept"))
@@ -67,11 +73,11 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                     .addHeader("Accept-Language", parser[0].getHeaderParam("Accept-Language"))
                     .build();
 */
-        } else
-            request = new Request.Builder().url(url).build();
+//        } else
+//            builder = new Request.Builder().url(url).build();
 
         try {
-            //Log.d("RES", request.headers().toString());
+            //Log.d("RES", builder.headers().toString());
             Response response = client.newCall(request).execute();
             if (response.code() == 204)
                 return "";

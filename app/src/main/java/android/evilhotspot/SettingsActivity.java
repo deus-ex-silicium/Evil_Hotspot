@@ -234,7 +234,7 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
 
                 CheckBox check = (CheckBox) findViewById(R.id.checkbox);
 
-                if(name=="AndroidAP" && password=="gh4zz88u")
+                if(name=="AndroidAP" && password=="123testing")
                 {
                     check.setChecked(true);
                     ApManager.isCheckBoxChecked=true;
