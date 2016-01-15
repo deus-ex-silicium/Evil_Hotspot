@@ -23,7 +23,7 @@ public class HttpRequestParser {
 
     private int current = 0;
     public HttpRequestParser() {
-        _requestHeaders = new Hashtable<String, String>();
+        _requestHeaders = new Hashtable<>();
 
         _requestHeadersVec = new Vector<>();
         _messageBody = new StringBuffer();
@@ -123,20 +123,13 @@ public class HttpRequestParser {
     public boolean isHTML(){
         String line = getRequestLine();
         String[] parts = line.split(" ");
-        if (parts[1].endsWith(".html") || parts[1].equals("/"))
-            return true;
-        else
-            return false;
+        return parts[1].endsWith(".html") || parts[1].endsWith(".php") || parts[1].equals("/");
     }
 
     public boolean isIMG(){
         String line = getRequestLine();
         String[] parts = line.split(" ");
-        if (parts[1].endsWith(".jpg") || parts[1].endsWith(".jpeg") || parts[1].endsWith(".png")){
-            return true;
-        }
-        else
-            return false;
+        return parts[1].endsWith(".jpg") || parts[1].endsWith(".jpeg") || parts[1].endsWith(".png");
     }
     public int getHeaderCount(){
         return _requestHeadersVec.size();

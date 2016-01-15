@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.evilhotspot.proxy.HttpProxyService;
+import android.evilhotspot.proxy.proxyService;
 import android.util.Log;
 
 /**
@@ -38,7 +38,7 @@ public class MyApplication extends Application {
            //   isfirsttime=true;
           MainActivity.hsButton.setBackgroundResource(R.drawable.button_on);
           //if(isfirsttime) {
-              context.startService(new Intent(context, HttpProxyService.class));
+              context.startService(new Intent(context, proxyService.class));
               isfirsttime=false;
          // }
           //when you have default seetings and switch off and on app in MainActivity then checkbox is checked, (default seetings on)
@@ -51,7 +51,7 @@ public class MyApplication extends Application {
       else if(!ApManager.isApOn()){
           //Button btn = MainActivity.hsButton;
           MainActivity.hsButton.setBackgroundResource(R.drawable.button_off);
-          context.stopService(new Intent(context, HttpProxyService.class));
+          context.stopService(new Intent(context, proxyService.class));
       }
  }
 

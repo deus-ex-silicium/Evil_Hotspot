@@ -34,21 +34,26 @@ public class ShellExecutor {
     }
 
     public boolean RunAsRoot(String command){
+        Process p;
         try {
-            Process p = Runtime.getRuntime().exec("su");
+            p = Runtime.getRuntime().exec("su");
 
             DataOutputStream os = new DataOutputStream(p.getOutputStream());
             os.writeBytes(command + '\n');
             os.writeBytes("exit\n");
             p.waitFor();
             os.flush();
-            if (p.exitValue() == 0)
-                return true;
-            else return false;
-        } catch (Exception e){
+        } catch (IOException e){
+            e.printStackTrace();
+            return false;
+        } catch (InterruptedException e) {
             e.printStackTrace();
             return false;
         }
+        if (p.exitValue() == 0)
+            return true;
+        else
+            return false;
     }
 
     public String RunAsRootWithException(String command) throws RuntimeException {
@@ -123,6 +128,10 @@ public class ShellExecutor {
     public boolean isRootAvailable() {
         String result = RunAsRootOutput("busybox id -u");
         return result.equals("0");
+    }
+
+    public boolean doesRuleExists(){
+        return RunAsRoot("iptables -t nat -L | grep \"www redir ports 1337\"");
     }
 
 }

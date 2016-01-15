@@ -1,6 +1,5 @@
 package android.evilhotspot.proxy;
 
-
 import android.content.Context;
 import android.content.res.Resources;
 import org.apache.commons.io.FileUtils;
@@ -10,14 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import android.evilhotspot.SettingsActivity;
 import android.util.Log;
 import android.widget.Toast;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.helper.*;
 import org.jsoup.select.Elements;
 
 /**
@@ -34,10 +31,6 @@ public class HTMLEditor {
             Log.d("REGEXP", m.group(0));
             Log.d("REGEXP->", m.group(1));
             HTML = HTML.replace(m.group(1), SettingsActivity.URLfield);
-            /*int start = HTML.indexOf(m.group(1));
-            String left = HTML.substring(0, start);
-            String right = HTML.substring(start + m.group(1).length());
-            HTML = left + SettingsActivity.URLfield + right;*/
         }
         return HTML;
     }

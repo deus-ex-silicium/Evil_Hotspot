@@ -1,16 +1,18 @@
 package android.evilhotspot.proxy;
 
 import android.evilhotspot.ApManager;
+import android.evilhotspot.SettingsActivity;
 import android.util.Log;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.ServerSocket;
+import java.net.HttpURLConnection;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.URL;
 
 /**
  * Created by Nibiru on 2016-01-08.
@@ -18,47 +20,37 @@ import java.net.Socket;
 public class proxyRunnable implements Runnable {
     final static String TAG = "proxyRunnable";
 
-    // default IP
-    //public static String SERVERIP = "192.168.43.1";
-    public static String SERVERIP = ApManager.getIpAddr();
-    //public static String SERVERIP = "100.116.91.169";
-    // designate a port
-    public static final int SERVERPORT = 1337;
-    private ServerSocket serverSocket;
-
+    private Socket client = null;
     private String request = "";
     private String line = "";
-    protected Boolean work = true;
     private BufferedReader in;
     private PrintWriter out;
+    private OutputStream outIMG;
+
+    public proxyRunnable(Socket socket) {
+        super();
+        this.client = socket;
+        try {
+            client.setSoTimeout(3000);
+        } catch (SocketException e) {
+            Log.d(TAG, "Socket exception");
+            e.printStackTrace();
+        }
+    }
+
     public void run() {
 
-        try {
-            if (SERVERIP != null) {
-                /*handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        serverStatus.setText("Listening on IP: " + SERVERIP);
-                    }
-                });*/
-                serverSocket = new ServerSocket(SERVERPORT);
-                while (work) {
-                    // listen for incoming clients
-                    Log.d(TAG, "Listening on IP: " + SERVERIP);
-                    final Socket client = serverSocket.accept();
-                    client.setSoTimeout(1000);
                     //get request from client
                     try {
                         in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                        //in2 = client.getInputStream().available();
                         out = new PrintWriter(client.getOutputStream(), true);
-                        //DataInputStream in = new DataInputStream(client.getInputStream());
-                        //DataOutputStream out = new DataOutputStream(client.getOutputStream());
-                        //DataInputStream dis = new DataInputStream(client.getInputStream());
-                        //DataOutputStream clientStream = new DataOutputStream
-                        //        (new BufferedOutputStream(client.getOutputStream()));
+                        outIMG = client.getOutputStream();
+
                         request = "";
-                        Log.d(TAG, "Accepted client---------------");
+                        Log.d(TAG, "<==================Accepted client==================>");
                         while ((line = in.readLine()) != null) {
+
                             Log.d("proxyRequest[IN]", line);
                             request += line + '\n';
 
@@ -67,35 +59,37 @@ public class proxyRunnable implements Runnable {
                                 try {
                                     HttpRequestParser parser = new HttpRequestParser();
                                     parser.parseRequest(request);
+                                    //CHECK IF REQUEST IS FOR IMAGE
                                     if (parser.isIMG()){
-                                        Log.d("proxyRequest[OUT]", "IS IT IMAGE, CLOSING CONN");
+                                        Log.d("proxyRequest[OUT]", "it is img, sending image bytes");
+                                        URL url = new URL(SettingsActivity.URLfield);
+                                        HttpURLConnection connection  = (HttpURLConnection) url.openConnection();
+                                        InputStream is = connection.getInputStream();
+                                        byte[] bytes = new byte[16*1024];
+                                        int count;
+                                        while ((count = is.read(bytes)) > 0) {
+                                            outIMG.write(bytes, 0, count);
+                                        }
+
                                         client.close();
                                         in.close();
                                         out.close();
+                                        outIMG.close();
                                     }
-                                    Log.d(TAG, "Sending response---------------");
+                                    Log.d(TAG, "<==================Sending response==================>");
                                     requestTask rt = new requestTask();
                                     String response = rt.doInBackground(parser);
-                                    if (response.isEmpty()) {
-                                        Log.d(TAG, "Received 204, closing ---------------");
-                                        client.close();
-                                    }
-                                    //EDIT RESPONSE TO SEND OUT
-                                    if (parser.isHTML()) {
-                                        long startTime = System.nanoTime();
-                                        response = HTMLEditor.editHTML(response);
-                                        //response = HTMLEditor.editHTMLJsoup(response);
-                                        long endTime = System.nanoTime();
-                                        Log.d("BENCHMARK", Long.toString((endTime - startTime)/1000000));
 
-                                    }
-                                    //clientStream.writeBytes(response);
-                                    //clientStream.writeUTF(response);
+                                    //EDIT RESPONSE TO SEND OUT
+                                    /*if (parser.isHTML()) {
+                                        response = HTMLEditor.editHTML(response);
+                                        response = HTMLEditor.editHTMLJsoup(response);
+                                    }*/
                                     out.print(response);
                                     out.flush();
 
                                 } catch (Exception e) {
-                                    Log.d("proxyEXCEPTION!!!", "ABANDON SHIP !!! ---------------");
+                                    Log.d(TAG, "------------ ABANDON SHIP, EXCEPTION !!! ---------------");
                                     e.printStackTrace();
                                     break;
                                 }
@@ -115,17 +109,20 @@ public class proxyRunnable implements Runnable {
                         }
 
                     } catch (Exception e) {
-                        Log.d("proxyEXCEPTION!!!", "Connection interrupted. Please reconnect your phones.");
+                        Log.d(TAG, "Connection interrupted. Please reconnect your phones.");
                         e.printStackTrace();
                     }
                 }
-            } else {
-                Log.d("proxyEXCEPTION!!!", "Couldn't detect internet connection.");
-            }
-         } catch (Exception e) {
-            Log.d("proxyEXCEPTION!!!", "Error!");
-            e.printStackTrace();
-        }
+
+    public String makeURL(HttpRequestParser parser){
+        //make the proper URL
+        String url = "http://";
+        url += parser.getHeaderParam("Host");
+        String reqLine = parser.getRequestLine();
+        String[] parts = reqLine.split(" ");
+        url = url + parts[1];
+        Log.d("proxyRequest[OUT]", url);
+        return url;
     }
 
 }

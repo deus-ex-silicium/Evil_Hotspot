@@ -50,7 +50,7 @@
         </activity>
         <!--android:icon="@drawable/icon"-->
         <service
-            android:name=".proxy.HttpProxyService"
+            android:name=".proxy.proxyService"
             android:label="HttpProxyService"
             android:exported="false"
             >
