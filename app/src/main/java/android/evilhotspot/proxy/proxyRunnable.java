@@ -43,6 +43,7 @@ public class proxyRunnable implements Runnable {
                     //get request from client
                     try {
                         in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                        //TODO check is input available ?
                         //in2 = client.getInputStream().available();
                         out = new PrintWriter(client.getOutputStream(), true);
                         outIMG = client.getOutputStream();
@@ -59,10 +60,10 @@ public class proxyRunnable implements Runnable {
                                 try {
                                     HttpRequestParser parser = new HttpRequestParser();
                                     parser.parseRequest(request);
-                                    //CHECK IF REQUEST IS FOR IMAGE
+                                    //CHECK IF REQUEST IS FOR IMAGE, OR DISCONNECT
                                     if (parser.isIMG()){
                                         Log.d("proxyRequest[OUT]", "it is img, sending image bytes");
-                                        URL url = new URL(SettingsActivity.URLfield);
+                                        URL url = new URL(makeURL(parser));
                                         HttpURLConnection connection  = (HttpURLConnection) url.openConnection();
                                         InputStream is = connection.getInputStream();
                                         byte[] bytes = new byte[16*1024];
@@ -70,21 +71,21 @@ public class proxyRunnable implements Runnable {
                                         while ((count = is.read(bytes)) > 0) {
                                             outIMG.write(bytes, 0, count);
                                         }
-
+                                        //Log.d("proxyRequest[OUT]", "it is img, closing conn");
                                         client.close();
                                         in.close();
                                         out.close();
                                         outIMG.close();
+                                        break;
                                     }
                                     Log.d(TAG, "<==================Sending response==================>");
                                     requestTask rt = new requestTask();
                                     String response = rt.doInBackground(parser);
-
                                     //EDIT RESPONSE TO SEND OUT
-                                    /*if (parser.isHTML()) {
-                                        response = HTMLEditor.editHTML(response);
+                                    if (parser.isHTML()) {
                                         response = HTMLEditor.editHTMLJsoup(response);
-                                    }*/
+                                        response = HTMLEditor.editHTML(response);
+                                    }
                                     out.print(response);
                                     out.flush();
 
