@@ -25,7 +25,7 @@ public class HTMLEditor {
 
     public static String editHTML(String HTML){
         //Pattern p = Pattern.compile("\\<\\s*img.*src\\s*=\\s*\"([^\"]*)\"");
-        Pattern p = Pattern.compile("<\\s*img[^s]+src\\s*=\\s*\"([^\"]*)\"");
+        Pattern p = Pattern.compile("<\\s*img[^>]*src\\s*=\\s*\"([^\"]*)\"");
         Matcher m = p.matcher(HTML);
         while (m.find()) {
             Log.d("REGEXP", m.group(0));

@@ -141,8 +141,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-
-
     //change current state of mobile hotspot
     private void hsPressed(){
         //Part for switching img of main button & enable/disable checkbox default
@@ -200,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             else
-                toastMessage("We don't have root my men...");
+                toastMessage("We don't have root buddy...");
         }
             //arpspoof (attempting to run a C program, build with NDK)
             //get resource handle
@@ -294,12 +292,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
 
         notificationManager.notify(0, n);
-
     }
     public static void cleannotif(Context context){
         NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
-
     }
     @Override
     protected void onResume() {
