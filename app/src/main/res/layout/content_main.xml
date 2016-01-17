@@ -45,10 +45,11 @@
         android:id="@+id/iptablesButton"
         android:layout_width="150dp"
         android:layout_height="90dp"
-        android:layout_marginTop="0dp"
+        android:background="@drawable/inject_rule2"
         android:layout_below="@+id/rtButton"
         android:layout_centerHorizontal="true"
-        android:background="@drawable/injectrule"/>
+        android:layout_alignLeft="@+id/rtButton"
+        android:layout_alignStart="@+id/rtButton" />
     <Button
         android:id="@+id/htmlbutton"
         android:layout_width="120dp"
@@ -60,7 +61,6 @@
         android:layout_alignRight="@+id/hsButton"
         android:layout_alignEnd="@+id/hsButton"
         android:visibility="gone"/>
-
 
 
 </RelativeLayout>

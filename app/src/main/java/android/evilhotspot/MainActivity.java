@@ -1,4 +1,7 @@
 package android.evilhotspot;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.evilhotspot.proxy.HTMLEditor;
@@ -9,6 +12,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -185,6 +189,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void rtPressed(){
         //if root test was pressed attempt to do something as root
         ShellExecutor exe = new ShellExecutor();
+
+
         if (exe.isRootAvailable()){
             toastMessage("We got root niggah!");
         }
@@ -194,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             else
-                toastMessage("We don't have root my mans...");
+                toastMessage("We don't have root my men...");
         }
             //arpspoof (attempting to run a C program, build with NDK)
             //get resource handle
@@ -226,8 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //check if rule exists, if yea, remove it, if no insert it
         if ( ! exe.doesRuleExists()) {
             if (exe.RunAsRoot("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")) {
-                //TODO TUTAJ ZMIENIAMY PRZYCISK NA REMOVE RULE
-                ruleButton.setText("Remove rule");
+                ruleButton.setBackgroundResource(R.drawable.remove_rule);
                 toastMessage("Success");
             }
             else
@@ -235,8 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         else {
             if (exe.RunAsRoot("iptables -t nat -D PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")){
-                //TODO TUTAJ ZMIENIAMY PRZYCISK NA INJECT RULE
-                ruleButton.setText("Inject rule");
+                ruleButton.setBackgroundResource(R.drawable.inject_rule2);
                 toastMessage("Success");
             }
             else
@@ -270,6 +274,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public static void notification(Context context){
+
+        Intent intent = new Intent(context, MainActivity.class);
+        PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), intent, 0);
+
+        Notification n  = new Notification.Builder(context)
+                .setContentTitle("Evil Hotspot")
+                .setContentText("Click here, let's start a havoc!")
+                .setSmallIcon(R.drawable.logo)
+                .setContentIntent(pIntent)
+                .setAutoCancel(true).build();
+
+
+
+        NotificationManager notificationManager =
+                (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+
+        notificationManager.notify(0, n);
+
+    }
+    public static void cleannotif(Context context){
+        NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
+
     }
     @Override
     protected void onResume() {

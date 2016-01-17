@@ -19,6 +19,7 @@
     //For getting IP
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+
     <application
         android:largeHeap="true"
 

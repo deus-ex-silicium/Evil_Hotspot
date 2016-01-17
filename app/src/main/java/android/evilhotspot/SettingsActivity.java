@@ -306,17 +306,17 @@ public class SettingsActivity extends AppCompatActivity  implements View.OnClick
         }
     }
 
-//    @Override
-//    protected void onResume() {
-//        super.onResume();
-//        MyApplication.activityResumed();
-//    }
-//
-//    @Override
-//    protected void onPause() {
-//        super.onPause();
-//        MyApplication.activityPaused();
-//    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MyApplication.activityResumed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MyApplication.activityPaused();
+    }
 }
 
 
