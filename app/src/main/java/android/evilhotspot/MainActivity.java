@@ -6,13 +6,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.evilhotspot.proxy.HTMLEditor;
 import android.evilhotspot.proxy.proxyService;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -22,12 +19,8 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.Toast;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 //List of android permissions:
 //http://developer.android.com/reference/android/Manifest.permission.html
@@ -50,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     final static String TAG = "MainActivity";
 
     public static Button hsButton ;
+    private ShellExecutor exe = new ShellExecutor();
     //MyApplication instance = new MyApplication(this);
 
     @Override
@@ -58,8 +52,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        //Create an ApManager to turn hotspot on and off
-        ApManager ap = new ApManager();
         //Register our buttons OnClickListener
         hsButton = (Button) findViewById(R.id.hsButton);
         hsButton.setOnClickListener(this);
@@ -104,6 +96,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         catch(Exception e){
             e.printStackTrace();
         }
+        //set inject button to correct state
+        if ( exe.doesRuleExists())
+            ruleButton.setBackgroundResource(R.drawable.remove_rule);
+        else
+            ruleButton.setBackgroundResource(R.drawable.inject_rule2);
+
         //Log.e("MyTemp", netInterface.getDisplayName());
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -123,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.hsButton:
                 Log.d("BUTTONS", "hotspot button pressed");
-                //if HS button was pressed turn on/off hotspot
+                //if HS button was pressed turn on/off hotspot&&proxy service
                 hsPressed();
                 break;
             case R.id.htmlbutton:
@@ -146,6 +144,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Part for switching img of main button & enable/disable checkbox default
         Context context = MainActivity.this;
         //WifiManager wifimanager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
+        //check if we actually have internet connection
+        if (!ApManager.hasInternetAccess(context) && ApManager.isMobileDataOn(context) ){
+            toastMessage("No internet detected :(");
+            return;
+        }
+
         try {
             WifiManager wifiManager = (WifiManager) context.getSystemService(context.WIFI_SERVICE);
             Method getConfigMethod = wifiManager.getClass().getMethod("getWifiApConfiguration");
@@ -186,8 +191,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     //try to do something as root (root test)
     private void rtPressed(){
         //if root test was pressed attempt to do something as root
-        ShellExecutor exe = new ShellExecutor();
-
 
         if (exe.isRootAvailable()){
             toastMessage("We got root niggah!");
@@ -226,7 +229,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     //inject/remove iptables rule that will route http traffic to our app
     private int iptablesRulePressed(Button ruleButton){
-        ShellExecutor exe = new ShellExecutor();
         //check if rule exists, if yea, remove it, if no insert it
         if ( ! exe.doesRuleExists()) {
             if (exe.RunAsRoot("iptables -t nat -I PREROUTING -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 1337")) {

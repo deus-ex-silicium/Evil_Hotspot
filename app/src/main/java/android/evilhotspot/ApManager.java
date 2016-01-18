@@ -27,6 +27,7 @@ public class ApManager {
     //http://stackoverflow.com/questions/6394599/android-turn-on-off-wifi-hotspot-programmatically
     //check whether wifi hotspot on or off
 
+    final static String TAG = "ApManager";
     //store string and boolean used in setting and main activity
     public static String name=null;
     public static String password =null;
@@ -185,5 +186,20 @@ public class ApManager {
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null;
     }
-
+    //check if mobile data is on
+    protected static boolean isMobileDataOn(Context c){
+        boolean mobileDataEnabled = false; // Assume disabled
+        ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+        try {
+            Class cmClass = Class.forName(cm.getClass().getName());
+            Method method = cmClass.getDeclaredMethod("getMobileDataEnabled");
+            method.setAccessible(true); // Make the method callable
+            // get the setting for "mobile data"
+            mobileDataEnabled = (Boolean)method.invoke(cm);
+        } catch (Exception e) {
+            // Some problem accessible private API
+            Log.d(TAG, "error accessing private API in open-source android huh?");
+        }
+        return mobileDataEnabled;
+    }
 }

@@ -21,10 +21,10 @@ public class proxyMainLoop implements Runnable {
     @Override
     public void run() {
         //http://codetheory.in/android-java-executor-framework/
-        int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+        //int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
         ThreadPoolExecutor executor = new ThreadPoolExecutor(
-                NUMBER_OF_CORES,
-                NUMBER_OF_CORES,
+                140,
+                140,
                 60L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>()

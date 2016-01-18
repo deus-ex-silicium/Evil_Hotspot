@@ -54,7 +54,7 @@ public class requestTask extends AsyncTask<HttpRequestParser, Void, String> {
                 return "HTTP/1.1 204 No Content\r\n\r\n";
             else {
                 String full = "";
-                //TODO response headers get displayed as plain text
+                //TODO response headers get displayed as plain text, why ?
                 /*Headers h = response.headers();
                 full += "HTTP/1.1 200 OK\n";
                 full += h.toString();

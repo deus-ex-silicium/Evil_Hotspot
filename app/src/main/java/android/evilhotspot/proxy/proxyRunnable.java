@@ -71,6 +71,7 @@ public class proxyRunnable implements Runnable {
                                         while ((count = is.read(bytes)) > 0) {
                                             outIMG.write(bytes, 0, count);
                                         }
+                                        outIMG.flush();
                                         //Log.d("proxyRequest[OUT]", "it is img, closing conn");
                                         client.close();
                                         in.close();
@@ -83,8 +84,8 @@ public class proxyRunnable implements Runnable {
                                     String response = rt.doInBackground(parser);
                                     //EDIT RESPONSE TO SEND OUT
                                     if (parser.isHTML()) {
-                                        response = HTMLEditor.editHTMLJsoup(response);
                                         response = HTMLEditor.editHTML(response);
+                                        //response = HTMLEditor.editHTMLJsoup(response);
                                     }
                                     out.print(response);
                                     out.flush();
